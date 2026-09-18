@@ -1,39 +1,247 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import {
+  MoreHorizontal,
+  Check,
+  BookOpen,
+  CreditCard,
+  FileText,
+  TrendingUp,
+  Settings,
+  Sparkles,
+  Clock,
+  ArrowUpRight,
+  ShieldCheck,
+  CheckCircle2,
+  CalendarDays,
+} from 'lucide-react';
+
+import Header from '../components/Header';
+import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
+import NewEntryModal from '../components/NewEntryModal';
 
 function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Sample financial data for initial overview
-  const transactions = [
-    { id: 'TX-1094', client: 'Apex Logistics Inc.', type: 'Invoice', date: 'Today, 2:15 PM', amount: '$4,250.00', status: 'paid' },
-    { id: 'TX-1093', client: 'Metro Auto Detailing', type: 'Credit Note', date: 'Yesterday', amount: '$1,820.00', status: 'pending' },
-    { id: 'TX-1092', client: 'Horizon Retailers', type: 'Invoice', date: 'Sep 15, 2026', amount: '$6,400.00', status: 'paid' },
-    { id: 'TX-1091', client: 'Quantum Cloud Ltd', type: 'Estimate', date: 'Sep 14, 2026', amount: '$3,100.00', status: 'pending' },
-    { id: 'TX-1090', client: 'Prime Freight Services', type: 'Invoice', date: 'Sep 12, 2026', amount: '$2,750.00', status: 'overdue' },
+  // Main Menu & Sub Menu state
+  const [expandedMenus, setExpandedMenus] = useState({
+    ledgers: true,
+    credit: false,
+    estimates: false,
+    cashflow: false,
+    settings: false,
+  });
+
+  const [activeSubMenu, setActiveSubMenu] = useState('customer-ledger');
+
+  const menuStructure = [
+    {
+      id: 'ledgers',
+      label: 'Ledgers & Accounts',
+      icon: BookOpen,
+      subMenus: [
+        { id: 'customer-ledger', label: 'Customer Ledger', tab: 'ledger' },
+        { id: 'vendor-ledger', label: 'Vendor Ledger', tab: 'all' },
+        { id: 'outstanding-balances', label: 'Outstanding Balances', tab: 'all' },
+      ],
+    },
+    {
+      id: 'credit',
+      label: 'Credit Management',
+      icon: CreditCard,
+      subMenus: [
+        { id: 'credit-entries', label: 'Credit Entries & Disbursals', tab: 'credit' },
+        { id: 'credit-limits', label: 'Credit Risk & Limits', tab: 'credit' },
+        { id: 'collections', label: 'Recovery & Collections', tab: 'credit' },
+      ],
+    },
+    {
+      id: 'estimates',
+      label: 'Billing & Estimates',
+      icon: FileText,
+      subMenus: [
+        { id: 'estimates-quotes', label: 'Estimates & Quotes', tab: 'estimate' },
+        { id: 'invoices-billing', label: 'Invoices & Billing', tab: 'all' },
+        { id: 'proforma', label: 'Proforma Invoices', tab: 'estimate' },
+      ],
+    },
+    {
+      id: 'cashflow',
+      label: 'Cash Flow & Banking',
+      icon: TrendingUp,
+      subMenus: [
+        { id: 'cash-tracking', label: 'Cash Flow Tracking', tab: 'all' },
+        { id: 'bank-reconcile', label: 'Bank Reconciliation', tab: 'settled' },
+        { id: 'daybook', label: 'Daily Daybook', tab: 'all' },
+      ],
+    },
+    {
+      id: 'settings',
+      label: 'System Settings',
+      icon: Settings,
+      subMenus: [
+        { id: 'company-profile', label: 'Company Profile', tab: 'all' },
+        { id: 'tax-audit', label: 'Tax & Audit Config', tab: 'all' },
+      ],
+    },
+  ];
+
+  const toggleMainMenu = (menuId) => {
+    if (isSidebarCollapsed) {
+      setIsSidebarCollapsed(false);
+      setExpandedMenus((prev) => ({ ...prev, [menuId]: true }));
+      return;
+    }
+    setExpandedMenus((prev) => ({
+      ...prev,
+      [menuId]: !prev[menuId],
+    }));
+  };
+
+  const handleSelectSubMenu = (menuId, sub) => {
+    setActiveSubMenu(sub.id);
+    setActiveTab(sub.tab);
+  };
+
+  // New entry form state
+  const [newCustomer, setNewCustomer] = useState('');
+  const [newType, setNewType] = useState('Customer Ledger');
+  const [newAmount, setNewAmount] = useState('');
+
+  // Financial ledger, credit entries, and estimates
+  const [entries, setEntries] = useState([
+    {
+      id: 1,
+      customer: 'Apex Logistics Inc.',
+      type: 'Customer Ledger',
+      typeClass: 'pill-cyan-bg pill-cyan-text',
+      date: 'Today, 2:15 PM',
+      amount: '$4,250.00',
+      settled: false,
+    },
+    {
+      id: 2,
+      customer: 'Metro Auto Detailing',
+      type: 'Credit Entry',
+      typeClass: 'pill-purple-bg pill-purple-text',
+      date: 'Yesterday, 5:40 PM',
+      amount: '$1,820.00',
+      settled: false,
+    },
+    {
+      id: 3,
+      customer: 'Quantum Cloud Ltd',
+      type: 'Estimate',
+      typeClass: 'pill-coral-bg pill-coral-text',
+      date: 'Sep 17, 2026',
+      amount: '$3,100.00',
+      settled: false,
+    },
+    {
+      id: 4,
+      customer: 'Horizon Retailers',
+      type: 'Customer Ledger',
+      typeClass: 'pill-cyan-bg pill-cyan-text',
+      date: 'Sep 15, 2026',
+      amount: '$6,400.00',
+      settled: true,
+    },
+    {
+      id: 5,
+      customer: 'Prime Freight Services',
+      type: 'Credit Entry',
+      typeClass: 'pill-purple-bg pill-purple-text',
+      date: 'Sep 14, 2026',
+      amount: '$2,750.00',
+      settled: false,
+    },
+  ]);
+
+  // Upcoming settlement milestones
+  const upcomingMilestones = [
+    {
+      id: 'm1',
+      client: 'Apex Logistics Inc.',
+      amount: '$4,250.00',
+      due: 'Due in 2 days (Sep 20)',
+      badge: 'Credit Due',
+      badgeClass: 'pill-coral-bg pill-coral-text',
+      icon: Clock,
+    },
+    {
+      id: 'm2',
+      client: 'Metro Auto Detailing',
+      amount: '$1,820.00',
+      due: 'Sep 22, 2026',
+      badge: 'Estimate Review',
+      badgeClass: 'pill-cyan-bg pill-cyan-text',
+      icon: FileText,
+    },
+    {
+      id: 'm3',
+      client: 'Horizon Retailers',
+      amount: '$6,400.00',
+      due: 'Sep 25, 2026',
+      badge: 'Settled Check',
+      badgeClass: 'pill-green-bg pill-green-text',
+      icon: CheckCircle2,
+    },
+    {
+      id: 'm4',
+      client: 'Quantum Cloud Ltd',
+      amount: '$3,100.00',
+      due: 'Sep 28, 2026',
+      badge: 'Estimate Approval',
+      badgeClass: 'pill-purple-bg pill-purple-text',
+      icon: ArrowUpRight,
+    },
   ];
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setUser(session.user);
+          setLoading(false);
+          return;
+        }
+
+        const demoUser = localStorage.getItem('sk_demo_user');
+        if (demoUser) {
+          setUser(JSON.parse(demoUser));
+          setLoading(false);
+          return;
+        }
+
         navigate('/login');
-        return;
+      } catch {
+        navigate('/login');
+      } finally {
+        setLoading(false);
       }
-      setUser(session.user);
-      setLoading(false);
     };
 
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate('/login');
-      } else {
+      if (session) {
         setUser(session.user);
+      } else {
+        const demoUser = localStorage.getItem('sk_demo_user');
+        if (demoUser) {
+          setUser(JSON.parse(demoUser));
+        } else {
+          navigate('/login');
+        }
       }
     });
 
@@ -41,170 +249,398 @@ function Dashboard() {
   }, [navigate]);
 
   const handleLogout = async () => {
+    localStorage.removeItem('sk_demo_user');
     await supabase.auth.signOut();
     navigate('/login');
   };
 
+  const toggleSettle = (id) => {
+    setEntries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, settled: !e.settled } : e))
+    );
+  };
+
+  const handleCreateEntry = (e) => {
+    e.preventDefault();
+    if (!newCustomer.trim() || !newAmount.trim()) return;
+
+    let typeClass = 'pill-cyan-bg pill-cyan-text';
+    if (newType === 'Credit Entry') typeClass = 'pill-purple-bg pill-purple-text';
+    if (newType === 'Estimate') typeClass = 'pill-coral-bg pill-coral-text';
+
+    const formattedAmount = newAmount.startsWith('$') ? newAmount : `$${newAmount}`;
+
+    const newEntry = {
+      id: Date.now(),
+      customer: newCustomer.trim(),
+      type: newType,
+      typeClass,
+      date: 'Just now',
+      amount: formattedAmount,
+      settled: false,
+    };
+
+    setEntries((prev) => [newEntry, ...prev]);
+    setNewCustomer('');
+    setNewAmount('');
+    setIsModalOpen(false);
+  };
+
   if (loading) {
     return (
-      <div className="loader-screen">
-        <span className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }}></span>
+      <div className="loader-screen-cream">
+        <div className="spinner-cream" />
         <p>Loading SK Finance workspace...</p>
       </div>
     );
   }
 
-  const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : 'U';
+  const rawEmail = user?.email || 'sara.connor@gmail.com';
+  const displayName = user?.user_metadata?.name || 
+    (rawEmail.includes('@') ? rawEmail.split('@')[0] : rawEmail);
+  const formattedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+
+  const todayDateString = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  // Filter entries based on search query and active tab
+  const filteredEntries = entries.filter((e) => {
+    const matchesSearch =
+      e.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.type.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (activeTab === 'all') return true;
+    if (activeTab === 'ledger') return e.type === 'Customer Ledger';
+    if (activeTab === 'credit') return e.type === 'Credit Entry';
+    if (activeTab === 'estimate') return e.type === 'Estimate';
+    if (activeTab === 'settled') return e.settled === true;
+    return true;
+  });
 
   return (
-    <div className="dashboard-layout">
-      {/* Top Navbar */}
-      <header className="navbar">
-        <div className="navbar-brand">
-          <div className="navbar-logo-box">
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-          </div>
-          <span className="navbar-brand-name">SK Finance</span>
-          <span className="navbar-brand-tag">Enterprise</span>
-        </div>
+    <div className="app-root-shell">
+      {/* 1. Global Header Component */}
+      <Header
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onOpenNewEntryModal={() => setIsModalOpen(true)}
+        formattedName={formattedName}
+      />
 
-        <div className="navbar-actions">
-          <div className="user-badge">
-            <span className="user-avatar">{userInitial}</span>
-            <span>{user?.email}</span>
-          </div>
+      {/* 2. Main Layout Area */}
+      <div className="app-main-layout">
+        {/* Sidebar Component with Main & Sub Menus */}
+        <Sidebar
+          isSidebarCollapsed={isSidebarCollapsed}
+          expandedMenus={expandedMenus}
+          onToggleMainMenu={toggleMainMenu}
+          activeSubMenu={activeSubMenu}
+          onSelectSubMenu={handleSelectSubMenu}
+          menuStructure={menuStructure}
+          onLogout={handleLogout}
+        />
 
-          <button onClick={handleLogout} className="btn btn-danger-outline">
-            Sign Out
-          </button>
-        </div>
-      </header>
+        {/* Enhanced Dashboard Workspace */}
+        <main className="dashboard-workspace-scroll">
+          {/* Greeting Hero Bar */}
+          <div className="workspace-hero-row">
+            <div>
+              <h1 className="workspace-greeting-title">Hello, {formattedName}</h1>
+              <p className="workspace-greeting-date">Today is {todayDateString}</p>
+            </div>
 
-      {/* Main Dashboard Body */}
-      <main className="dashboard-container">
-        {/* Hero Welcome */}
-        <div className="dashboard-hero">
-          <div>
-            <h1 className="dashboard-heading">Finance Overview</h1>
-            <p className="dashboard-subtitle">
-              Real-time cash flow, accounts receivable, and customer credit ledger.
-            </p>
-          </div>
-
-          <div className="hero-btn-group">
-            <button className="btn btn-secondary">
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Export Report
-            </button>
-            <button className="btn btn-primary" style={{ width: 'auto' }}>
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              New Transaction
-            </button>
-          </div>
-        </div>
-
-        {/* 4 Key Metrics Cards */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-header">
-              <span className="stat-label">Total Revenue</span>
-              <div className="stat-icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            <div className="workspace-quick-stats-strip">
+              <div className="quick-pill-stat">
+                <ShieldCheck size={14} color="#5DBDB9" />
+                <span>Recovery Rate: <strong>94.2%</strong></span>
+              </div>
+              <div className="quick-pill-stat">
+                <Clock size={14} color="#FA6E50" />
+                <span>Pending Settled: <strong>{entries.filter((e) => !e.settled).length} Accounts</strong></span>
+              </div>
+              <div className="quick-pill-stat">
+                <TrendingUp size={14} color="#4B2850" />
+                <span>Net Cashflow: <strong>+$84,620.00</strong></span>
               </div>
             </div>
-            <div className="stat-value">$148,250.00</div>
-            <span className="stat-change positive">↑ +12.4% vs last month</span>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-header">
-              <span className="stat-label">Outstanding Credit</span>
-              <div className="stat-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
+          {/* 3 Signature Hero Cards (Plum, Mint Teal, Coral) */}
+          <div className="hero-financial-cards-grid">
+            {/* Card 1: Plum - Customer Ledger */}
+            <div
+              className="hero-fin-card card-plum"
+              onClick={() => setActiveTab('ledger')}
+            >
+              <div className="card-top-icon-row">
+                <div className="card-round-icon-badge">
+                  <BookOpen size={18} />
+                </div>
+                <button className="card-action-menu-btn" aria-label="More options">
+                  <MoreHorizontal size={18} />
+                </button>
+              </div>
+              <div>
+                <h3 className="card-headline-title">Customer Ledger</h3>
+                <div className="card-detail-subtext">
+                  <span>$148,250.00</span>
+                  <span>•</span>
+                  <span>65% reconciled</span>
+                </div>
+                <div className="card-progress-bar-track">
+                  <div className="card-progress-bar-fill" style={{ width: '65%' }} />
+                </div>
               </div>
             </div>
-            <div className="stat-value">$24,800.00</div>
-            <span className="stat-change warning">⚠ 3 accounts pending</span>
-          </div>
 
-          <div className="stat-card">
-            <div className="stat-header">
-              <span className="stat-label">Net Cash Flow</span>
-              <div className="stat-icon-wrapper" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
+            {/* Card 2: Mint Teal - Credit Entry & Disbursal */}
+            <div
+              className="hero-fin-card card-teal"
+              onClick={() => setActiveTab('credit')}
+            >
+              <div className="card-top-icon-row">
+                <div className="card-round-icon-badge">
+                  <CreditCard size={18} />
+                </div>
+                <button className="card-action-menu-btn" aria-label="More options">
+                  <MoreHorizontal size={18} />
+                </button>
+              </div>
+              <div>
+                <h3 className="card-headline-title">Credit Entry</h3>
+                <div className="card-detail-subtext">
+                  <span>$42,800.00</span>
+                  <span>•</span>
+                  <span>48% disbursed</span>
+                </div>
+                <div className="card-progress-bar-track">
+                  <div className="card-progress-bar-fill" style={{ width: '48%' }} />
+                </div>
               </div>
             </div>
-            <div className="stat-value">+$84,620.00</div>
-            <span className="stat-change positive">↑ +8.2% positive growth</span>
-          </div>
 
-          <div className="stat-card">
-            <div className="stat-header">
-              <span className="stat-label">Active Invoices</span>
-              <div className="stat-icon-wrapper" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' }}>
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+            {/* Card 3: Coral - Estimates & Quotes */}
+            <div
+              className="hero-fin-card card-coral"
+              onClick={() => setActiveTab('estimate')}
+            >
+              <div className="card-top-icon-row">
+                <div className="card-round-icon-badge">
+                  <FileText size={18} />
+                </div>
+                <button className="card-action-menu-btn" aria-label="More options">
+                  <MoreHorizontal size={18} />
+                </button>
+              </div>
+              <div>
+                <h3 className="card-headline-title">Active Estimates</h3>
+                <div className="card-detail-subtext">
+                  <span>$86,400.00</span>
+                  <span>•</span>
+                  <span>75% converted</span>
+                </div>
+                <div className="card-progress-bar-track">
+                  <div className="card-progress-bar-fill" style={{ width: '75%' }} />
+                </div>
               </div>
             </div>
-            <div className="stat-value">18 Active</div>
-            <span className="stat-change neutral">6 pending approvals</span>
-          </div>
-        </div>
-
-        {/* Ledger & Recent Activity Table */}
-        <div className="section-card">
-          <div className="section-header">
-            <h2 className="section-title">Recent Transactions & Ledger Activity</h2>
-            <button className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: 13 }}>
-              View All Ledgers
-            </button>
           </div>
 
-          <div className="table-responsive">
-            <table className="ledger-table">
-              <thead>
-                <tr>
-                  <th>Transaction ID</th>
-                  <th>Client / Account</th>
-                  <th>Type</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((tx) => (
-                  <tr key={tx.id}>
-                    <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{tx.id}</td>
-                    <td>{tx.client}</td>
-                    <td>{tx.type}</td>
-                    <td>{tx.date}</td>
-                    <td style={{ fontWeight: 700, color: 'var(--text-main)' }}>{tx.amount}</td>
-                    <td>
-                      <span className={`status-pill ${tx.status}`}>
-                        ● {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                      </span>
-                    </td>
-                  </tr>
+          {/* Composite Financial Dashboard Grid */}
+          <div className="dashboard-composite-grid">
+            {/* Left Section: Filter Tabs & Recent Entries */}
+            <div>
+              <div className="composite-header-row">
+                <h2 className="composite-title-text">Recent Ledger & Credit Records</h2>
+                <div className="composite-filter-tabs">
+                  <button
+                    className={`composite-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('all')}
+                  >
+                    All ({entries.length})
+                  </button>
+                  <button
+                    className={`composite-tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('ledger')}
+                  >
+                    Ledgers
+                  </button>
+                  <button
+                    className={`composite-tab-btn ${activeTab === 'credit' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('credit')}
+                  >
+                    Credit
+                  </button>
+                  <button
+                    className={`composite-tab-btn ${activeTab === 'estimate' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('estimate')}
+                  >
+                    Estimates
+                  </button>
+                  <button
+                    className={`composite-tab-btn ${activeTab === 'settled' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('settled')}
+                  >
+                    Settled
+                  </button>
+                </div>
+              </div>
+
+              <div className="financial-entries-container">
+                {filteredEntries.map((entry) => (
+                  <div key={entry.id} className="fin-entry-row-card">
+                    <div className="fin-entry-info">
+                      <div className="fin-entry-pills-row">
+                        <span className={`fin-type-pill ${entry.typeClass}`}>
+                          {entry.type}
+                        </span>
+                        <span className="fin-date-label">{entry.date}</span>
+                      </div>
+                      <div className="fin-customer-headline">
+                        <span
+                          style={{
+                            textDecoration: entry.settled ? 'line-through' : 'none',
+                            opacity: entry.settled ? 0.6 : 1,
+                          }}
+                        >
+                          {entry.customer}
+                        </span>
+                        <span className="fin-entry-amount">{entry.amount}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      className={`btn-toggle-reconcile ${entry.settled ? 'settled' : ''}`}
+                      onClick={() => toggleSettle(entry.id)}
+                      title={entry.settled ? 'Mark Unsettled' : 'Mark Reconciled'}
+                    >
+                      <Check size={16} strokeWidth={3} />
+                    </button>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+
+            {/* Right Section: Credit Aging, Milestones, and Multi-Bank Sync */}
+            <div className="fin-analytics-side-col">
+              {/* Credit Aging & Settlement Health */}
+              <div className="aging-health-card">
+                <div className="card-mini-title">
+                  <span>Credit Aging & Exposure</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Real-time</span>
+                </div>
+
+                <div className="aging-segments-bar">
+                  <div className="aging-seg-current" title="Current (0-30 Days): 62%" />
+                  <div className="aging-seg-30days" title="31-60 Days: 24%" />
+                  <div className="aging-seg-overdue" title="60+ Days Overdue: 14%" />
+                </div>
+
+                <div className="aging-legend-row">
+                  <div className="aging-legend-item">
+                    <span className="aging-legend-header">
+                      <span className="aging-legend-dot" style={{ background: 'var(--teal-primary)' }} />
+                      <span>Current</span>
+                    </span>
+                    <span className="aging-legend-value">$91,915</span>
+                  </div>
+
+                  <div className="aging-legend-item">
+                    <span className="aging-legend-header">
+                      <span className="aging-legend-dot" style={{ background: 'var(--plum-primary)' }} />
+                      <span>30-60d</span>
+                    </span>
+                    <span className="aging-legend-value">$35,580</span>
+                  </div>
+
+                  <div className="aging-legend-item">
+                    <span className="aging-legend-header">
+                      <span className="aging-legend-dot" style={{ background: 'var(--coral-primary)' }} />
+                      <span>Overdue</span>
+                    </span>
+                    <span className="aging-legend-value">$20,755</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Upcoming Settlement Milestones */}
+              <div className="settlement-milestones-card">
+                <div className="card-mini-title">
+                  <span>Settlement Milestones</span>
+                  <CalendarDays size={16} color="var(--text-muted)" />
+                </div>
+
+                <div className="milestones-list">
+                  {upcomingMilestones.map((m) => {
+                    const IconComp = m.icon;
+                    return (
+                      <div key={m.id} className="milestone-item">
+                        <div className="milestone-left">
+                          <div
+                            className="milestone-icon-box"
+                            style={{ background: 'rgba(235, 230, 220, 0.7)' }}
+                          >
+                            <IconComp size={16} color="var(--text-primary)" />
+                          </div>
+                          <div className="milestone-text">
+                            <span className="milestone-client">{m.client}</span>
+                            <span className="milestone-date-due">{m.due}</span>
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontWeight: 800, fontSize: 13 }}>{m.amount}</div>
+                          <span className={`milestone-badge ${m.badgeClass}`}>
+                            {m.badge}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Multi-Bank Ledger Reconcile Card */}
+              <div className="pro-enterprise-card">
+                <div className="pro-enterprise-text">
+                  <span className="pro-badge-tier">Instant Sync</span>
+                  <h4 className="pro-enterprise-title">Multi-Bank Ledger Reconcile</h4>
+                  <p className="pro-enterprise-desc">
+                    Auto-match customer credit entries with live bank feeds in real-time.
+                  </p>
+                </div>
+                <div className="pro-enterprise-icon-badge">
+                  <Sparkles size={24} />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </main>
+
+          {/* 3. Simple Footer (Below Scroll) */}
+          <Footer />
+        </main>
+      </div>
+
+      {/* 4. New Entry Modal Component */}
+      <NewEntryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        newCustomer={newCustomer}
+        setNewCustomer={setNewCustomer}
+        newType={newType}
+        setNewType={setNewType}
+        newAmount={newAmount}
+        setNewAmount={setNewAmount}
+        onSubmit={handleCreateEntry}
+      />
     </div>
   );
 }

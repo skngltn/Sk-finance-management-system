@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { AlertCircle, CheckCircle2, Play, Mail, Lock, ArrowRight } from 'lucide-react';
 
 function Signup() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ function Signup() {
     setMessage('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match. Please verify.');
+      setError('Passwords do not match. Please re-check.');
       return;
     }
 
@@ -44,7 +45,7 @@ function Signup() {
       if (data.session) {
         navigate('/dashboard');
       } else {
-        setMessage('Account created successfully! Please check your email inbox to confirm your account.');
+        setMessage('Account created! Please check your email inbox to verify your account.');
       }
     } catch (err) {
       setError(err.message || 'Failed to create account.');
@@ -53,99 +54,141 @@ function Signup() {
     }
   };
 
-  return (
-    <div className="auth-wrapper">
-      <div className="auth-ambient-glow" />
+  const handleDemoAccess = () => {
+    localStorage.setItem(
+      'sk_demo_user',
+      JSON.stringify({
+        id: 'demo-user-sara',
+        email: 'sara.connor@gmail.com',
+        user_metadata: { name: 'Sara' },
+      })
+    );
+    navigate('/dashboard');
+  };
 
-      <div className="auth-card">
-        <div className="brand-header">
-          <div className="brand-badge">
-            <svg className="brand-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="brand-badge-text">SK Finance</span>
+  return (
+    <div className="auth-viewport">
+      <div className="auth-ambient-circle-1" />
+      <div className="auth-ambient-circle-2" />
+
+      <div className="auth-card-cream">
+        <div className="auth-brand-center">
+          <div className="auth-brand-logo">
+            <div className="brand-dot-indicator">
+              <span className="bar-1" />
+              <span className="bar-2" />
+              <span className="bar-3" />
+            </div>
+            <span className="brand-title-text">SK Finance</span>
           </div>
 
-          <h1 className="auth-title">Create Account</h1>
-          <p className="auth-subtitle">Set up your business finance and ledger workspace</p>
+          <h1 className="auth-page-title">Create Account</h1>
+          <p className="auth-page-subtitle">
+            Start managing customer ledgers, credit entries & estimates
+          </p>
         </div>
 
         {error && (
-          <div className="alert alert-error">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
+          <div className="auth-alert error">
+            <AlertCircle size={18} />
             <span>{error}</span>
           </div>
         )}
 
         {message && (
-          <div className="alert alert-success">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-            </svg>
+          <div className="auth-alert success">
+            <CheckCircle2 size={18} />
             <span>{message}</span>
           </div>
         )}
 
         <form onSubmit={handleSignup}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="signup-email">Work Email</label>
-            <input
-              id="signup-email"
-              className="form-input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.com"
-              required
-            />
+          <div className="auth-form-group">
+            <label className="auth-form-label" htmlFor="signup-email">
+              Email Address
+            </label>
+            <div className="auth-input-container">
+              <Mail size={16} className="auth-input-icon" />
+              <input
+                id="signup-email"
+                className="auth-form-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="sara.connor@gmail.com"
+                required
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="signup-password">Password</label>
-            <input
-              id="signup-password"
-              className="form-input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Minimum 6 characters"
-              minLength={6}
-              required
-            />
+          <div className="auth-form-group">
+            <label className="auth-form-label" htmlFor="signup-password">
+              Password
+            </label>
+            <div className="auth-input-container">
+              <Lock size={16} className="auth-input-icon" />
+              <input
+                id="signup-password"
+                className="auth-form-input"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 6 characters"
+                minLength={6}
+                required
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="confirm-password">Confirm Password</label>
-            <input
-              id="confirm-password"
-              className="form-input"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter password"
-              required
-            />
+          <div className="auth-form-group">
+            <label className="auth-form-label" htmlFor="signup-confirm-password">
+              Confirm Password
+            </label>
+            <div className="auth-input-container">
+              <Lock size={16} className="auth-input-icon" />
+              <input
+                id="signup-confirm-password"
+                className="auth-form-input"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter password"
+                required
+              />
+            </div>
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+          <button type="submit" className="auth-btn-submit" disabled={loading}>
             {loading ? (
               <>
-                <span className="spinner"></span>
-                <span>Creating Account...</span>
+                <span className="spinner-round" />
+                <span>Creating Workspace...</span>
               </>
             ) : (
-              'Get Started with SK Finance'
+              <>
+                <span>Create Account</span>
+                <ArrowRight size={16} />
+              </>
             )}
           </button>
         </form>
 
-        <div className="auth-footer">
+        <div className="auth-divider-line">
+          <span>or explore immediately</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleDemoAccess}
+          className="auth-btn-demo"
+        >
+          <Play size={16} />
+          <span>Demo Workspace Preview</span>
+        </button>
+
+        <div className="auth-footer-text">
           Already have an account?{' '}
-          <Link to="/login" className="auth-link">
+          <Link to="/login" className="auth-footer-link">
             Sign in
           </Link>
         </div>
