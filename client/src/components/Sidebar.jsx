@@ -11,9 +11,8 @@ function Sidebar({
 }) {
   return (
     <aside
-      className={`app-collapsible-sidebar ${
-        isSidebarCollapsed ? 'collapsed' : 'expanded'
-      }`}
+      className={`app-collapsible-sidebar ${isSidebarCollapsed ? 'collapsed' : 'expanded'
+        }`}
     >
       <nav className="sidebar-nav-group">
         {menuStructure.map((menu) => {

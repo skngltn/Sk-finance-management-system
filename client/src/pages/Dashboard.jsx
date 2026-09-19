@@ -206,11 +206,29 @@ function Dashboard() {
   ];
 
   useEffect(() => {
+    const fetchUserProfile = async (sessionUser) => {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, email, full_name, role')
+          .eq('id', sessionUser.id)
+          .maybeSingle();
+
+        setUser({
+          ...sessionUser,
+          profile: profile || null,
+        });
+      } catch (err) {
+        console.warn('Could not fetch user profile:', err);
+        setUser(sessionUser);
+      }
+    };
+
     const checkUser = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          setUser(session.user);
+          await fetchUserProfile(session.user);
           setLoading(false);
           return;
         }
@@ -232,9 +250,9 @@ function Dashboard() {
 
     checkUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
-        setUser(session.user);
+        await fetchUserProfile(session.user);
       } else {
         const demoUser = localStorage.getItem('sk_demo_user');
         if (demoUser) {
@@ -295,10 +313,17 @@ function Dashboard() {
     );
   }
 
-  const rawEmail = user?.email || 'sara.connor@gmail.com';
-  const displayName = user?.user_metadata?.name || 
+  const profile = user?.profile;
+  const rawEmail = profile?.email || user?.email || 'sara.connor@gmail.com';
+  const displayName =
+    profile?.full_name ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
     (rawEmail.includes('@') ? rawEmail.split('@')[0] : rawEmail);
   const formattedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+  const userRole = profile?.role
+    ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1)
+    : 'Finance Admin';
 
   const todayDateString = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -333,6 +358,7 @@ function Dashboard() {
         onSearchChange={setSearchQuery}
         onOpenNewEntryModal={() => setIsModalOpen(true)}
         formattedName={formattedName}
+        userRole={userRole}
       />
 
       {/* 2. Main Layout Area */}

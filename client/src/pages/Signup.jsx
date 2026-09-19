@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { AlertCircle, CheckCircle2, Play, Mail, Lock, ArrowRight } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Mail, Lock, ArrowRight, User, Briefcase } from 'lucide-react';
 
 function Signup() {
   const navigate = useNavigate();
 
+  const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState('admin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -17,6 +19,11 @@ function Signup() {
     e.preventDefault();
     setError('');
     setMessage('');
+
+    if (!fullName.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match. Please re-check.');
@@ -34,6 +41,12 @@ function Signup() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+            role: role,
+          },
+        },
       });
 
       if (error) {
@@ -43,6 +56,18 @@ function Signup() {
       }
 
       if (data.session) {
+        // Direct upsert to public.profiles (ensures record exists even if database trigger isn't created yet)
+        try {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            email: data.user.email,
+            full_name: fullName.trim(),
+            role: role,
+          });
+        } catch (profileErr) {
+          console.warn('Profile table sync info:', profileErr);
+        }
+
         navigate('/dashboard');
       } else {
         setMessage('Account created! Please check your email inbox to verify your account.');
@@ -52,18 +77,6 @@ function Signup() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoAccess = () => {
-    localStorage.setItem(
-      'sk_demo_user',
-      JSON.stringify({
-        id: 'demo-user-sara',
-        email: 'sara.connor@gmail.com',
-        user_metadata: { name: 'Sara' },
-      })
-    );
-    navigate('/dashboard');
   };
 
   return (
@@ -103,6 +116,45 @@ function Signup() {
         )}
 
         <form onSubmit={handleSignup}>
+          <div className="auth-form-group">
+            <label className="auth-form-label" htmlFor="signup-name">
+              Full Name
+            </label>
+            <div className="auth-input-container">
+              <User size={16} className="auth-input-icon" />
+              <input
+                id="signup-name"
+                className="auth-form-input"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Sara Connor"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="auth-form-group">
+            <label className="auth-form-label" htmlFor="signup-role">
+              Select Role
+            </label>
+            <div className="auth-input-container">
+              <Briefcase size={16} className="auth-input-icon" />
+              <select
+                id="signup-role"
+                className="auth-form-input auth-form-select"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                required
+              >
+                <option value="admin">Admin</option>
+                <option value="manager">Manager</option>
+                <option value="staff">Staff</option>
+                <option value="accountant">Accountant</option>
+              </select>
+            </div>
+          </div>
+
           <div className="auth-form-group">
             <label className="auth-form-label" htmlFor="signup-email">
               Email Address
@@ -172,19 +224,6 @@ function Signup() {
             )}
           </button>
         </form>
-
-        <div className="auth-divider-line">
-          <span>or explore immediately</span>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleDemoAccess}
-          className="auth-btn-demo"
-        >
-          <Play size={16} />
-          <span>Demo Workspace Preview</span>
-        </button>
 
         <div className="auth-footer-text">
           Already have an account?{' '}

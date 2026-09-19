@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { AlertCircle, Play, Mail, Lock, ArrowRight } from 'lucide-react';
+import { AlertCircle, Mail, Lock, ArrowRight } from 'lucide-react';
 
 function Login() {
   const navigate = useNavigate();
@@ -35,18 +35,6 @@ function Login() {
       setError(err.message || 'An unexpected authentication error occurred.');
       setLoading(false);
     }
-  };
-
-  const handleDemoLogin = () => {
-    localStorage.setItem(
-      'sk_demo_user',
-      JSON.stringify({
-        id: 'demo-user-sara',
-        email: 'sara.connor@gmail.com',
-        user_metadata: { name: 'Sara' },
-      })
-    );
-    navigate('/dashboard');
   };
 
   return (
@@ -129,19 +117,6 @@ function Login() {
             )}
           </button>
         </form>
-
-        <div className="auth-divider-line">
-          <span>or explore instantly</span>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleDemoLogin}
-          className="auth-btn-demo"
-        >
-          <Play size={16} />
-          <span>Demo Workspace Preview</span>
-        </button>
 
         <div className="auth-footer-text">
           Don't have an account?{' '}

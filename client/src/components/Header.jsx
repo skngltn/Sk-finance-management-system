@@ -7,6 +7,7 @@ function Header({
   onSearchChange,
   onOpenNewEntryModal,
   formattedName = 'Sara',
+  userRole = 'Finance Admin',
 }) {
   return (
     <header className="app-top-header">
@@ -60,7 +61,7 @@ function Header({
 
         <div className="header-account-tag">
           <span className="header-user-name">{formattedName}</span>
-          <span className="header-user-role">Finance Admin</span>
+          <span className="header-user-role">{userRole}</span>
         </div>
       </div>
     </header>
