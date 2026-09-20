@@ -21,6 +21,18 @@ import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
 import NewEntryModal from '../components/NewEntryModal';
+import MainMenuPage from './MainMenuPage';
+import SubMenuPage from './SubMenuPage';
+import PermissionPage from './PermissionPage';
+
+const iconMap = {
+  BookOpen,
+  CreditCard,
+  FileText,
+  TrendingUp,
+  Settings,
+  MoreHorizontal
+};
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -32,69 +44,68 @@ function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Main Menu & Sub Menu state
-  const [expandedMenus, setExpandedMenus] = useState({
-    ledgers: true,
-    credit: false,
-    estimates: false,
-    cashflow: false,
-    settings: false,
-  });
+  const [expandedMenus, setExpandedMenus] = useState({});
+  const [activeSubMenu, setActiveSubMenu] = useState('');
+  const [menuStructure, setMenuStructure] = useState([]);
 
-  const [activeSubMenu, setActiveSubMenu] = useState('customer-ledger');
+  useEffect(() => {
+    const fetchMenuStructure = async () => {
+      const { data: mainData, error: mainError } = await supabase.from('mainmenu').select('*').order('sort_order', { ascending: true });
+      if (mainError) {
+        console.error('Error fetching mainmenu:', mainError);
+        return;
+      }
 
-  const menuStructure = [
-    {
-      id: 'ledgers',
-      label: 'Ledgers & Accounts',
-      icon: BookOpen,
-      subMenus: [
-        { id: 'customer-ledger', label: 'Customer Ledger', tab: 'ledger' },
-        { id: 'vendor-ledger', label: 'Vendor Ledger', tab: 'all' },
-        { id: 'outstanding-balances', label: 'Outstanding Balances', tab: 'all' },
-      ],
-    },
-    {
-      id: 'credit',
-      label: 'Credit Management',
-      icon: CreditCard,
-      subMenus: [
-        { id: 'credit-entries', label: 'Credit Entries & Disbursals', tab: 'credit' },
-        { id: 'credit-limits', label: 'Credit Risk & Limits', tab: 'credit' },
-        { id: 'collections', label: 'Recovery & Collections', tab: 'credit' },
-      ],
-    },
-    {
-      id: 'estimates',
-      label: 'Billing & Estimates',
-      icon: FileText,
-      subMenus: [
-        { id: 'estimates-quotes', label: 'Estimates & Quotes', tab: 'estimate' },
-        { id: 'invoices-billing', label: 'Invoices & Billing', tab: 'all' },
-        { id: 'proforma', label: 'Proforma Invoices', tab: 'estimate' },
-      ],
-    },
-    {
-      id: 'cashflow',
-      label: 'Cash Flow & Banking',
-      icon: TrendingUp,
-      subMenus: [
-        { id: 'cash-tracking', label: 'Cash Flow Tracking', tab: 'all' },
-        { id: 'bank-reconcile', label: 'Bank Reconciliation', tab: 'settled' },
-        { id: 'daybook', label: 'Daily Daybook', tab: 'all' },
-      ],
-    },
-    {
-      id: 'settings',
-      label: 'System Settings',
-      icon: Settings,
-      subMenus: [
-        { id: 'company-profile', label: 'Company Profile', tab: 'all' },
-        { id: 'tax-audit', label: 'Tax & Audit Config', tab: 'all' },
-      ],
-    },
-  ];
+      const { data: subData, error: subError } = await supabase.from('submenu').select('*').order('sort_by', { ascending: true });
+      if (subError) {
+        console.error('Error fetching submenu:', subError);
+        return;
+      }
+
+      const dynamicMenu = (mainData || []).map((main) => {
+        const subMenusForMain = (subData || [])
+          .filter((sub) => sub.menu_id === main.id)
+          .map((sub) => ({
+            id: sub.id,
+            label: sub.submenu_name,
+            tab: sub.path ? sub.path.split('/').filter(Boolean).pop().toLowerCase() : 'all'
+          }));
+
+        const IconComp = iconMap[main.icon] || BookOpen;
+
+        return {
+          id: main.id,
+          label: main.menu_name,
+          icon: IconComp,
+          path: main.path ? main.path.split('/').filter(Boolean).pop().toLowerCase() : 'all',
+          subMenus: subMenusForMain,
+        };
+      });
+
+      setMenuStructure(dynamicMenu);
+
+      const initialExpanded = {};
+      dynamicMenu.forEach(m => {
+        initialExpanded[m.id] = true;
+      });
+      setExpandedMenus(prev => Object.keys(prev).length > 0 ? prev : initialExpanded);
+      setActiveSubMenu(prev => prev || (dynamicMenu[0]?.subMenus[0]?.id || ''));
+      setActiveTab(prev => (prev === 'all' && dynamicMenu[0]?.subMenus[0]?.tab) ? dynamicMenu[0].subMenus[0].tab : prev);
+    };
+
+    fetchMenuStructure();
+  }, []);
 
   const toggleMainMenu = (menuId) => {
+    const menu = menuStructure.find((m) => m.id === menuId);
+    // If the main menu has no submenus, clicking it should navigate directly
+    if (menu && menu.subMenus.length === 0) {
+      setActiveSubMenu(menu.id);
+      setActiveTab(menu.path);
+      if (isSidebarCollapsed) setIsSidebarCollapsed(false);
+      return;
+    }
+
     if (isSidebarCollapsed) {
       setIsSidebarCollapsed(false);
       setExpandedMenus((prev) => ({ ...prev, [menuId]: true }));
@@ -376,8 +387,17 @@ function Dashboard() {
 
         {/* Enhanced Dashboard Workspace */}
         <main className="dashboard-workspace-scroll">
-          {/* Greeting Hero Bar */}
-          <div className="workspace-hero-row">
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {activeTab.includes('mainmenu') ? (
+              <MainMenuPage />
+            ) : activeTab.includes('submenu') ? (
+              <SubMenuPage />
+            ) : activeTab.includes('permission') ? (
+              <PermissionPage />
+            ) : (
+              <>
+                {/* Greeting Hero Bar */}
+                <div className="workspace-hero-row">
             <div>
               <h1 className="workspace-greeting-title">Hello, {formattedName}</h1>
               <p className="workspace-greeting-date">Today is {todayDateString}</p>
@@ -648,6 +668,9 @@ function Dashboard() {
                 </div>
               </div>
             </div>
+          </div>
+              </>
+            )}
           </div>
 
           {/* 3. Simple Footer (Below Scroll) */}

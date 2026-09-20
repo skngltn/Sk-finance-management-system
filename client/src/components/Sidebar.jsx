@@ -18,7 +18,7 @@ function Sidebar({
         {menuStructure.map((menu) => {
           const IconComp = menu.icon;
           const isExpanded = expandedMenus[menu.id];
-          const isParentActive = menu.subMenus.some((sub) => sub.id === activeSubMenu);
+          const isParentActive = menu.subMenus.some((sub) => sub.id === activeSubMenu) || activeSubMenu === menu.id;
 
           return (
             <div key={menu.id} className="sidebar-main-menu-item">
@@ -34,7 +34,7 @@ function Sidebar({
                   {!isSidebarCollapsed && <span>{menu.label}</span>}
                 </div>
 
-                {!isSidebarCollapsed && (
+                {!isSidebarCollapsed && menu.subMenus && menu.subMenus.length > 0 && (
                   <ChevronDown
                     size={15}
                     className={`sidebar-chevron-icon ${isExpanded ? 'is-open' : ''}`}
