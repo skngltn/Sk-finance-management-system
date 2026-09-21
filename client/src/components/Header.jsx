@@ -6,6 +6,7 @@ function Header({
   searchQuery,
   onSearchChange,
   onOpenNewEntryModal,
+  onOpenNewEstimate,
   formattedName = 'Sara',
   userRole = 'Finance Admin',
 }) {
@@ -51,6 +52,16 @@ function Header({
           <span className="notif-unread-dot" />
         </button>
 
+        <button className="btn-header-action"
+          style={{
+            background: 'var(--coral-primary)',
+            borderColor: 'var(--coral-primary)'
+          }}
+          onClick={onOpenNewEstimate}
+          title='Create a new Estimate for Customer or Parties'>
+          <Plus size={16} />
+          <span>New Estimate</span>
+        </button>
         <button
           className="btn-header-action"
           onClick={onOpenNewEntryModal}

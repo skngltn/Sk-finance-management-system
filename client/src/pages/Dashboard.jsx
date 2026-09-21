@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   ShieldCheck,
   CheckCircle2,
+  Plus,
   CalendarDays,
 } from 'lucide-react';
 
@@ -24,6 +25,7 @@ import NewEntryModal from '../components/NewEntryModal';
 import MainMenuPage from './MainMenuPage';
 import SubMenuPage from './SubMenuPage';
 import PermissionPage from './PermissionPage';
+import NewEstimatePage from './NewEstimatePage';
 
 const iconMap = {
   BookOpen,
@@ -368,6 +370,7 @@ function Dashboard() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onOpenNewEntryModal={() => setIsModalOpen(true)}
+        onOpenNewEstimate={() => setActiveTab('new-estimate')}
         formattedName={formattedName}
         userRole={userRole}
       />
@@ -388,7 +391,15 @@ function Dashboard() {
         {/* Enhanced Dashboard Workspace */}
         <main className="dashboard-workspace-scroll">
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            {activeTab.includes('mainmenu') ? (
+            {activeTab === 'new-estimate' ? (
+              <NewEstimatePage
+                onBack={() => setActiveTab('all')}
+                onEstimateSaved={(newEst) => {
+                  setEntries((prev) => [newEst, ...prev]);
+                  setActiveTab('all');
+                }}
+              />
+            ) : activeTab.includes('mainmenu') ? (
               <MainMenuPage />
             ) : activeTab.includes('submenu') ? (
               <SubMenuPage />
@@ -398,277 +409,285 @@ function Dashboard() {
               <>
                 {/* Greeting Hero Bar */}
                 <div className="workspace-hero-row">
-            <div>
-              <h1 className="workspace-greeting-title">Hello, {formattedName}</h1>
-              <p className="workspace-greeting-date">Today is {todayDateString}</p>
-            </div>
+                  <div>
+                    <h1 className="workspace-greeting-title">Hello, {formattedName}</h1>
+                    <p className="workspace-greeting-date">Today is {todayDateString}</p>
+                  </div>
 
-            <div className="workspace-quick-stats-strip">
-              <div className="quick-pill-stat">
-                <ShieldCheck size={14} color="#5DBDB9" />
-                <span>Recovery Rate: <strong>94.2%</strong></span>
-              </div>
-              <div className="quick-pill-stat">
-                <Clock size={14} color="#FA6E50" />
-                <span>Pending Settled: <strong>{entries.filter((e) => !e.settled).length} Accounts</strong></span>
-              </div>
-              <div className="quick-pill-stat">
-                <TrendingUp size={14} color="#4B2850" />
-                <span>Net Cashflow: <strong>+$84,620.00</strong></span>
-              </div>
-            </div>
-          </div>
+                  <div className="workspace-quick-stats-strip">
+                    <div className="quick-pill-stat">
+                      <ShieldCheck size={14} color="#5DBDB9" />
+                      <span>Recovery Rate: <strong>94.2%</strong></span>
+                    </div>
+                    <div className="quick-pill-stat">
+                      <Clock size={14} color="#FA6E50" />
+                      <span>Pending Settled: <strong>{entries.filter((e) => !e.settled).length} Accounts</strong></span>
+                    </div>
+                    <div className="quick-pill-stat">
+                      <TrendingUp size={14} color="#4B2850" />
+                      <span>Net Cashflow: <strong>+$84,620.00</strong></span>
+                    </div>
+                  </div>
+                </div>
 
-          {/* 3 Signature Hero Cards (Plum, Mint Teal, Coral) */}
-          <div className="hero-financial-cards-grid">
-            {/* Card 1: Plum - Customer Ledger */}
-            <div
-              className="hero-fin-card card-plum"
-              onClick={() => setActiveTab('ledger')}
-            >
-              <div className="card-top-icon-row">
-                <div className="card-round-icon-badge">
-                  <BookOpen size={18} />
-                </div>
-                <button className="card-action-menu-btn" aria-label="More options">
-                  <MoreHorizontal size={18} />
-                </button>
-              </div>
-              <div>
-                <h3 className="card-headline-title">Customer Ledger</h3>
-                <div className="card-detail-subtext">
-                  <span>$148,250.00</span>
-                  <span>•</span>
-                  <span>65% reconciled</span>
-                </div>
-                <div className="card-progress-bar-track">
-                  <div className="card-progress-bar-fill" style={{ width: '65%' }} />
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2: Mint Teal - Credit Entry & Disbursal */}
-            <div
-              className="hero-fin-card card-teal"
-              onClick={() => setActiveTab('credit')}
-            >
-              <div className="card-top-icon-row">
-                <div className="card-round-icon-badge">
-                  <CreditCard size={18} />
-                </div>
-                <button className="card-action-menu-btn" aria-label="More options">
-                  <MoreHorizontal size={18} />
-                </button>
-              </div>
-              <div>
-                <h3 className="card-headline-title">Credit Entry</h3>
-                <div className="card-detail-subtext">
-                  <span>$42,800.00</span>
-                  <span>•</span>
-                  <span>48% disbursed</span>
-                </div>
-                <div className="card-progress-bar-track">
-                  <div className="card-progress-bar-fill" style={{ width: '48%' }} />
-                </div>
-              </div>
-            </div>
-
-            {/* Card 3: Coral - Estimates & Quotes */}
-            <div
-              className="hero-fin-card card-coral"
-              onClick={() => setActiveTab('estimate')}
-            >
-              <div className="card-top-icon-row">
-                <div className="card-round-icon-badge">
-                  <FileText size={18} />
-                </div>
-                <button className="card-action-menu-btn" aria-label="More options">
-                  <MoreHorizontal size={18} />
-                </button>
-              </div>
-              <div>
-                <h3 className="card-headline-title">Active Estimates</h3>
-                <div className="card-detail-subtext">
-                  <span>$86,400.00</span>
-                  <span>•</span>
-                  <span>75% converted</span>
-                </div>
-                <div className="card-progress-bar-track">
-                  <div className="card-progress-bar-fill" style={{ width: '75%' }} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Composite Financial Dashboard Grid */}
-          <div className="dashboard-composite-grid">
-            {/* Left Section: Filter Tabs & Recent Entries */}
-            <div>
-              <div className="composite-header-row">
-                <h2 className="composite-title-text">Recent Ledger & Credit Records</h2>
-                <div className="composite-filter-tabs">
-                  <button
-                    className={`composite-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('all')}
-                  >
-                    All ({entries.length})
-                  </button>
-                  <button
-                    className={`composite-tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
+                {/* 3 Signature Hero Cards (Plum, Mint Teal, Coral) */}
+                <div className="hero-financial-cards-grid">
+                  {/* Card 1: Plum - Customer Ledger */}
+                  <div
+                    className="hero-fin-card card-plum"
                     onClick={() => setActiveTab('ledger')}
                   >
-                    Ledgers
-                  </button>
-                  <button
-                    className={`composite-tab-btn ${activeTab === 'credit' ? 'active' : ''}`}
+                    <div className="card-top-icon-row">
+                      <div className="card-round-icon-badge">
+                        <BookOpen size={18} />
+                      </div>
+                      <button className="card-action-menu-btn" aria-label="More options">
+                        <MoreHorizontal size={18} />
+                      </button>
+                    </div>
+                    <div>
+                      <h3 className="card-headline-title">Customer Ledger</h3>
+                      <div className="card-detail-subtext">
+                        <span>$148,250.00</span>
+                        <span>•</span>
+                        <span>65% reconciled</span>
+                      </div>
+                      <div className="card-progress-bar-track">
+                        <div className="card-progress-bar-fill" style={{ width: '65%' }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Mint Teal - Credit Entry & Disbursal */}
+                  <div
+                    className="hero-fin-card card-teal"
                     onClick={() => setActiveTab('credit')}
                   >
-                    Credit
-                  </button>
-                  <button
-                    className={`composite-tab-btn ${activeTab === 'estimate' ? 'active' : ''}`}
+                    <div className="card-top-icon-row">
+                      <div className="card-round-icon-badge">
+                        <CreditCard size={18} />
+                      </div>
+                      <button className="card-action-menu-btn" aria-label="More options">
+                        <MoreHorizontal size={18} />
+                      </button>
+                    </div>
+                    <div>
+                      <h3 className="card-headline-title">Credit Entry</h3>
+                      <div className="card-detail-subtext">
+                        <span>$42,800.00</span>
+                        <span>•</span>
+                        <span>48% disbursed</span>
+                      </div>
+                      <div className="card-progress-bar-track">
+                        <div className="card-progress-bar-fill" style={{ width: '48%' }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Coral - Estimates & Quotes */}
+                  <div
+                    className="hero-fin-card card-coral"
                     onClick={() => setActiveTab('estimate')}
                   >
-                    Estimates
-                  </button>
-                  <button
-                    className={`composite-tab-btn ${activeTab === 'settled' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('settled')}
-                  >
-                    Settled
-                  </button>
-                </div>
-              </div>
-
-              <div className="financial-entries-container">
-                {filteredEntries.map((entry) => (
-                  <div key={entry.id} className="fin-entry-row-card">
-                    <div className="fin-entry-info">
-                      <div className="fin-entry-pills-row">
-                        <span className={`fin-type-pill ${entry.typeClass}`}>
-                          {entry.type}
-                        </span>
-                        <span className="fin-date-label">{entry.date}</span>
+                    <div className="card-top-icon-row">
+                      <div className="card-round-icon-badge">
+                        <FileText size={18} />
                       </div>
-                      <div className="fin-customer-headline">
-                        <span
-                          style={{
-                            textDecoration: entry.settled ? 'line-through' : 'none',
-                            opacity: entry.settled ? 0.6 : 1,
-                          }}
+                      <button
+                        className="card-action-menu-btn"
+                        aria-label="Create New Estimate"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveTab('new-estimate');
+                        }}
+                        title="Create New Estimate"
+                      >
+                        <Plus size={18} />
+                      </button>
+                    </div>
+                    <div>
+                      <h3 className="card-headline-title">Active Estimates</h3>
+                      <div className="card-detail-subtext">
+                        <span>$86,400.00</span>
+                        <span>•</span>
+                        <span>75% converted</span>
+                      </div>
+                      <div className="card-progress-bar-track">
+                        <div className="card-progress-bar-fill" style={{ width: '75%' }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Composite Financial Dashboard Grid */}
+                <div className="dashboard-composite-grid">
+                  {/* Left Section: Filter Tabs & Recent Entries */}
+                  <div>
+                    <div className="composite-header-row">
+                      <h2 className="composite-title-text">Recent Ledger & Credit Records</h2>
+                      <div className="composite-filter-tabs">
+                        <button
+                          className={`composite-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('all')}
                         >
-                          {entry.customer}
-                        </span>
-                        <span className="fin-entry-amount">{entry.amount}</span>
+                          All ({entries.length})
+                        </button>
+                        <button
+                          className={`composite-tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('ledger')}
+                        >
+                          Ledgers
+                        </button>
+                        <button
+                          className={`composite-tab-btn ${activeTab === 'credit' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('credit')}
+                        >
+                          Credit
+                        </button>
+                        <button
+                          className={`composite-tab-btn ${activeTab === 'estimate' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('estimate')}
+                        >
+                          Estimates
+                        </button>
+                        <button
+                          className={`composite-tab-btn ${activeTab === 'settled' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('settled')}
+                        >
+                          Settled
+                        </button>
                       </div>
                     </div>
 
-                    <button
-                      className={`btn-toggle-reconcile ${entry.settled ? 'settled' : ''}`}
-                      onClick={() => toggleSettle(entry.id)}
-                      title={entry.settled ? 'Mark Unsettled' : 'Mark Reconciled'}
-                    >
-                      <Check size={16} strokeWidth={3} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
+                    <div className="financial-entries-container">
+                      {filteredEntries.map((entry) => (
+                        <div key={entry.id} className="fin-entry-row-card">
+                          <div className="fin-entry-info">
+                            <div className="fin-entry-pills-row">
+                              <span className={`fin-type-pill ${entry.typeClass}`}>
+                                {entry.type}
+                              </span>
+                              <span className="fin-date-label">{entry.date}</span>
+                            </div>
+                            <div className="fin-customer-headline">
+                              <span
+                                style={{
+                                  textDecoration: entry.settled ? 'line-through' : 'none',
+                                  opacity: entry.settled ? 0.6 : 1,
+                                }}
+                              >
+                                {entry.customer}
+                              </span>
+                              <span className="fin-entry-amount">{entry.amount}</span>
+                            </div>
+                          </div>
 
-            {/* Right Section: Credit Aging, Milestones, and Multi-Bank Sync */}
-            <div className="fin-analytics-side-col">
-              {/* Credit Aging & Settlement Health */}
-              <div className="aging-health-card">
-                <div className="card-mini-title">
-                  <span>Credit Aging & Exposure</span>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Real-time</span>
-                </div>
-
-                <div className="aging-segments-bar">
-                  <div className="aging-seg-current" title="Current (0-30 Days): 62%" />
-                  <div className="aging-seg-30days" title="31-60 Days: 24%" />
-                  <div className="aging-seg-overdue" title="60+ Days Overdue: 14%" />
-                </div>
-
-                <div className="aging-legend-row">
-                  <div className="aging-legend-item">
-                    <span className="aging-legend-header">
-                      <span className="aging-legend-dot" style={{ background: 'var(--teal-primary)' }} />
-                      <span>Current</span>
-                    </span>
-                    <span className="aging-legend-value">$91,915</span>
-                  </div>
-
-                  <div className="aging-legend-item">
-                    <span className="aging-legend-header">
-                      <span className="aging-legend-dot" style={{ background: 'var(--plum-primary)' }} />
-                      <span>30-60d</span>
-                    </span>
-                    <span className="aging-legend-value">$35,580</span>
-                  </div>
-
-                  <div className="aging-legend-item">
-                    <span className="aging-legend-header">
-                      <span className="aging-legend-dot" style={{ background: 'var(--coral-primary)' }} />
-                      <span>Overdue</span>
-                    </span>
-                    <span className="aging-legend-value">$20,755</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Upcoming Settlement Milestones */}
-              <div className="settlement-milestones-card">
-                <div className="card-mini-title">
-                  <span>Settlement Milestones</span>
-                  <CalendarDays size={16} color="var(--text-muted)" />
-                </div>
-
-                <div className="milestones-list">
-                  {upcomingMilestones.map((m) => {
-                    const IconComp = m.icon;
-                    return (
-                      <div key={m.id} className="milestone-item">
-                        <div className="milestone-left">
-                          <div
-                            className="milestone-icon-box"
-                            style={{ background: 'rgba(235, 230, 220, 0.7)' }}
+                          <button
+                            className={`btn-toggle-reconcile ${entry.settled ? 'settled' : ''}`}
+                            onClick={() => toggleSettle(entry.id)}
+                            title={entry.settled ? 'Mark Unsettled' : 'Mark Reconciled'}
                           >
-                            <IconComp size={16} color="var(--text-primary)" />
-                          </div>
-                          <div className="milestone-text">
-                            <span className="milestone-client">{m.client}</span>
-                            <span className="milestone-date-due">{m.due}</span>
-                          </div>
+                            <Check size={16} strokeWidth={3} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Right Section: Credit Aging, Milestones, and Multi-Bank Sync */}
+                  <div className="fin-analytics-side-col">
+                    {/* Credit Aging & Settlement Health */}
+                    <div className="aging-health-card">
+                      <div className="card-mini-title">
+                        <span>Credit Aging & Exposure</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Real-time</span>
+                      </div>
+
+                      <div className="aging-segments-bar">
+                        <div className="aging-seg-current" title="Current (0-30 Days): 62%" />
+                        <div className="aging-seg-30days" title="31-60 Days: 24%" />
+                        <div className="aging-seg-overdue" title="60+ Days Overdue: 14%" />
+                      </div>
+
+                      <div className="aging-legend-row">
+                        <div className="aging-legend-item">
+                          <span className="aging-legend-header">
+                            <span className="aging-legend-dot" style={{ background: 'var(--teal-primary)' }} />
+                            <span>Current</span>
+                          </span>
+                          <span className="aging-legend-value">$91,915</span>
                         </div>
 
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: 800, fontSize: 13 }}>{m.amount}</div>
-                          <span className={`milestone-badge ${m.badgeClass}`}>
-                            {m.badge}
+                        <div className="aging-legend-item">
+                          <span className="aging-legend-header">
+                            <span className="aging-legend-dot" style={{ background: 'var(--plum-primary)' }} />
+                            <span>30-60d</span>
                           </span>
+                          <span className="aging-legend-value">$35,580</span>
+                        </div>
+
+                        <div className="aging-legend-item">
+                          <span className="aging-legend-header">
+                            <span className="aging-legend-dot" style={{ background: 'var(--coral-primary)' }} />
+                            <span>Overdue</span>
+                          </span>
+                          <span className="aging-legend-value">$20,755</span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
+                    </div>
 
-              {/* Multi-Bank Ledger Reconcile Card */}
-              <div className="pro-enterprise-card">
-                <div className="pro-enterprise-text">
-                  <span className="pro-badge-tier">Instant Sync</span>
-                  <h4 className="pro-enterprise-title">Multi-Bank Ledger Reconcile</h4>
-                  <p className="pro-enterprise-desc">
-                    Auto-match customer credit entries with live bank feeds in real-time.
-                  </p>
+                    {/* Upcoming Settlement Milestones */}
+                    <div className="settlement-milestones-card">
+                      <div className="card-mini-title">
+                        <span>Settlement Milestones</span>
+                        <CalendarDays size={16} color="var(--text-muted)" />
+                      </div>
+
+                      <div className="milestones-list">
+                        {upcomingMilestones.map((m) => {
+                          const IconComp = m.icon;
+                          return (
+                            <div key={m.id} className="milestone-item">
+                              <div className="milestone-left">
+                                <div
+                                  className="milestone-icon-box"
+                                  style={{ background: 'rgba(235, 230, 220, 0.7)' }}
+                                >
+                                  <IconComp size={16} color="var(--text-primary)" />
+                                </div>
+                                <div className="milestone-text">
+                                  <span className="milestone-client">{m.client}</span>
+                                  <span className="milestone-date-due">{m.due}</span>
+                                </div>
+                              </div>
+
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontWeight: 800, fontSize: 13 }}>{m.amount}</div>
+                                <span className={`milestone-badge ${m.badgeClass}`}>
+                                  {m.badge}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Multi-Bank Ledger Reconcile Card */}
+                    <div className="pro-enterprise-card">
+                      <div className="pro-enterprise-text">
+                        <span className="pro-badge-tier">Instant Sync</span>
+                        <h4 className="pro-enterprise-title">Multi-Bank Ledger Reconcile</h4>
+                        <p className="pro-enterprise-desc">
+                          Auto-match customer credit entries with live bank feeds in real-time.
+                        </p>
+                      </div>
+                      <div className="pro-enterprise-icon-badge">
+                        <Sparkles size={24} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="pro-enterprise-icon-badge">
-                  <Sparkles size={24} />
-                </div>
-              </div>
-            </div>
-          </div>
               </>
             )}
           </div>
