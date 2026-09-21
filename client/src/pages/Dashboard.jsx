@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Plus,
   CalendarDays,
+  Users,
 } from 'lucide-react';
 
 import Header from '../components/Header';
@@ -26,6 +27,8 @@ import MainMenuPage from './MainMenuPage';
 import SubMenuPage from './SubMenuPage';
 import PermissionPage from './PermissionPage';
 import NewEstimatePage from './NewEstimatePage';
+import EnterpriseTable from '../components/EnterpriseTable';
+import { DashboardCharts } from '../components/DashboardCharts';
 
 const iconMap = {
   BookOpen,
@@ -129,52 +132,67 @@ function Dashboard() {
   const [newType, setNewType] = useState('Customer Ledger');
   const [newAmount, setNewAmount] = useState('');
 
-  // Financial ledger, credit entries, and estimates
+  // Financial ledger, credit entries, invoices, and estimates
   const [entries, setEntries] = useState([
     {
       id: 1,
-      customer: 'Apex Logistics Inc.',
-      type: 'Customer Ledger',
+      refNo: 'INV-1024',
+      customer: 'ABC Industries',
+      type: 'Invoice',
+      description: 'Car Wash Service',
       typeClass: 'pill-cyan-bg pill-cyan-text',
-      date: 'Today, 2:15 PM',
-      amount: '$4,250.00',
-      settled: false,
+      date: '21 Sep 2026',
+      amount: '$48,500.00',
+      settled: true,
+      status: 'paid',
     },
     {
       id: 2,
-      customer: 'Metro Auto Detailing',
-      type: 'Credit Entry',
+      refNo: 'PAY-8891',
+      customer: 'ABC Industries',
+      type: 'Payment',
+      description: 'Online Payment',
       typeClass: 'pill-purple-bg pill-purple-text',
-      date: 'Yesterday, 5:40 PM',
-      amount: '$1,820.00',
-      settled: false,
+      date: '20 Sep 2026',
+      amount: '$25,000.00',
+      settled: true,
+      status: 'received',
     },
     {
       id: 3,
-      customer: 'Quantum Cloud Ltd',
-      type: 'Estimate',
-      typeClass: 'pill-coral-bg pill-coral-text',
-      date: 'Sep 17, 2026',
-      amount: '$3,100.00',
-      settled: false,
+      refNo: 'CE-0042',
+      customer: 'XYZ Pvt Ltd',
+      type: 'Credit Entry',
+      description: 'Sales Return',
+      typeClass: 'pill-purple-bg pill-purple-text',
+      date: '19 Sep 2026',
+      amount: '$12,000.00',
+      settled: true,
+      status: 'posted',
     },
     {
       id: 4,
-      customer: 'Horizon Retailers',
-      type: 'Customer Ledger',
-      typeClass: 'pill-cyan-bg pill-cyan-text',
-      date: 'Sep 15, 2026',
-      amount: '$6,400.00',
-      settled: true,
+      refNo: 'EST-1028',
+      customer: 'Global Traders',
+      type: 'Estimate',
+      description: 'Annual Maintenance',
+      typeClass: 'pill-coral-bg pill-coral-text',
+      date: '18 Sep 2026',
+      amount: '$32,500.00',
+      settled: false,
+      status: 'pending',
     },
     {
       id: 5,
-      customer: 'Prime Freight Services',
-      type: 'Credit Entry',
-      typeClass: 'pill-purple-bg pill-purple-text',
-      date: 'Sep 14, 2026',
-      amount: '$2,750.00',
+      refNo: 'INV-1023',
+      customer: 'XYZ Pvt Ltd',
+      type: 'Invoice',
+      description: 'Full Car Detailing',
+      typeClass: 'pill-cyan-bg pill-cyan-text',
+      date: '17 Sep 2026',
+      amount: '$18,750.00',
       settled: false,
+      status: 'overdue',
     },
   ]);
 
@@ -287,8 +305,28 @@ function Dashboard() {
 
   const toggleSettle = (id) => {
     setEntries((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, settled: !e.settled } : e))
+      prev.map((e) => {
+        if (e.id === id) {
+          const nextSettled = !e.settled;
+          return {
+            ...e,
+            settled: nextSettled,
+            status: nextSettled ? 'paid' : 'pending',
+          };
+        }
+        return e;
+      })
     );
+  };
+
+  const handleUpdateEntry = (id, updatedFields) => {
+    setEntries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, ...updatedFields } : e))
+    );
+  };
+
+  const handleDeleteEntry = (id) => {
+    setEntries((prev) => prev.filter((e) => e.id !== id));
   };
 
   const handleCreateEntry = (e) => {
@@ -300,15 +338,20 @@ function Dashboard() {
     if (newType === 'Estimate') typeClass = 'pill-coral-bg pill-coral-text';
 
     const formattedAmount = newAmount.startsWith('$') ? newAmount : `$${newAmount}`;
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const prefix = newType === 'Credit Entry' ? 'CE-' : newType === 'Estimate' ? 'EST-' : 'INV-';
 
     const newEntry = {
       id: Date.now(),
+      refNo: `${prefix}${randomNum}`,
       customer: newCustomer.trim(),
       type: newType,
+      description: `${newType} Disbursal`,
       typeClass,
-      date: 'Just now',
+      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
       amount: formattedAmount,
       settled: false,
+      status: 'pending',
     };
 
     setEntries((prev) => [newEntry, ...prev]);
@@ -343,22 +386,6 @@ function Dashboard() {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  });
-
-  // Filter entries based on search query and active tab
-  const filteredEntries = entries.filter((e) => {
-    const matchesSearch =
-      e.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.type.toLowerCase().includes(searchQuery.toLowerCase());
-
-    if (!matchesSearch) return false;
-
-    if (activeTab === 'all') return true;
-    if (activeTab === 'ledger') return e.type === 'Customer Ledger';
-    if (activeTab === 'credit') return e.type === 'Credit Entry';
-    if (activeTab === 'estimate') return e.type === 'Estimate';
-    if (activeTab === 'settled') return e.settled === true;
-    return true;
   });
 
   return (
@@ -407,286 +434,111 @@ function Dashboard() {
               <PermissionPage />
             ) : (
               <>
-                {/* Greeting Hero Bar */}
+                {/* 1. Greeting Hero Bar */}
                 <div className="workspace-hero-row">
                   <div>
-                    <h1 className="workspace-greeting-title">Hello, {formattedName}</h1>
-                    <p className="workspace-greeting-date">Today is {todayDateString}</p>
+                    <h1 className="workspace-greeting-title">Good evening, {formattedName} 👋</h1>
+                    <p className="workspace-greeting-date">Here's what's happening with your business today.</p>
                   </div>
 
-                  <div className="workspace-quick-stats-strip">
-                    <div className="quick-pill-stat">
-                      <ShieldCheck size={14} color="#5DBDB9" />
-                      <span>Recovery Rate: <strong>94.2%</strong></span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <div className="erp-date-range-badge">
+                      <CalendarDays size={14} color="#6B7280" />
+                      <span>{todayDateString}</span>
                     </div>
-                    <div className="quick-pill-stat">
-                      <Clock size={14} color="#FA6E50" />
-                      <span>Pending Settled: <strong>{entries.filter((e) => !e.settled).length} Accounts</strong></span>
+                    <button
+                      className="btn-erp-new-entry"
+                      onClick={() => setIsModalOpen(true)}
+                    >
+                      + New Entry
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Sleek ERP Stat Cards with Decorative Circle Styles (Matching Reference Design) */}
+                <div className="stonemart-stat-cards-grid">
+                  {/* Card 1: Blue - Total Revenue */}
+                  <div className="stonemart-stat-card theme-blue">
+                    <div className="card-corner-circle circle-blue" />
+                    <div className="card-squircle-icon icon-blue">
+                      <TrendingUp size={20} color="#FFFFFF" />
                     </div>
-                    <div className="quick-pill-stat">
-                      <TrendingUp size={14} color="#4B2850" />
-                      <span>Net Cashflow: <strong>+$84,620.00</strong></span>
+                    <div className="card-metric-info">
+                      <span className="card-metric-label">Total Revenue</span>
+                      <h3 className="card-metric-value">$148,250</h3>
+                      <span className="card-metric-subtext">↑ 14.8% vs last month</span>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Purple - Receivables */}
+                  <div className="stonemart-stat-card theme-purple">
+                    <div className="card-corner-circle circle-purple" />
+                    <div className="card-squircle-icon icon-purple">
+                      <CreditCard size={20} color="#FFFFFF" />
+                    </div>
+                    <div className="card-metric-info">
+                      <span className="card-metric-label">Receivables</span>
+                      <h3 className="card-metric-value">$32,450</h3>
+                      <span className="card-metric-subtext">24 invoices pending</span>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Green - Payments Received */}
+                  <div className="stonemart-stat-card theme-green">
+                    <div className="card-corner-circle circle-green" />
+                    <div className="card-squircle-icon icon-green">
+                      <CheckCircle2 size={20} color="#FFFFFF" />
+                    </div>
+                    <div className="card-metric-info">
+                      <span className="card-metric-label">Payments Received</span>
+                      <h3 className="card-metric-value">$89,240</h3>
+                      <span className="card-metric-subtext">↑ 12.1% vs last month</span>
+                    </div>
+                  </div>
+
+                  {/* Card 4: Orange - Active Clients */}
+                  <div className="stonemart-stat-card theme-orange">
+                    <div className="card-corner-circle circle-orange" />
+                    <div className="card-squircle-icon icon-orange">
+                      <Users size={20} color="#FFFFFF" />
+                    </div>
+                    <div className="card-metric-info">
+                      <span className="card-metric-label">Active Clients</span>
+                      <h3 className="card-metric-value">1,284</h3>
+                      <span className="card-metric-subtext">+18 new this month</span>
+                    </div>
+                  </div>
+
+                  {/* Card 5: Teal - Customer Ledgers */}
+                  <div className="stonemart-stat-card theme-teal">
+                    <div className="card-corner-circle circle-teal" />
+                    <div className="card-squircle-icon icon-teal">
+                      <BookOpen size={20} color="#FFFFFF" />
+                    </div>
+                    <div className="card-metric-info">
+                      <span className="card-metric-label">Customer Ledgers</span>
+                      <h3 className="card-metric-value">342</h3>
+                      <span className="card-metric-subtext">94.2% reconciled</span>
                     </div>
                   </div>
                 </div>
 
-                {/* 3 Signature Hero Cards (Plum, Mint Teal, Coral) */}
-                <div className="hero-financial-cards-grid">
-                  {/* Card 1: Plum - Customer Ledger */}
-                  <div
-                    className="hero-fin-card card-plum"
-                    onClick={() => setActiveTab('ledger')}
-                  >
-                    <div className="card-top-icon-row">
-                      <div className="card-round-icon-badge">
-                        <BookOpen size={18} />
-                      </div>
-                      <button className="card-action-menu-btn" aria-label="More options">
-                        <MoreHorizontal size={18} />
-                      </button>
-                    </div>
-                    <div>
-                      <h3 className="card-headline-title">Customer Ledger</h3>
-                      <div className="card-detail-subtext">
-                        <span>$148,250.00</span>
-                        <span>•</span>
-                        <span>65% reconciled</span>
-                      </div>
-                      <div className="card-progress-bar-track">
-                        <div className="card-progress-bar-fill" style={{ width: '65%' }} />
-                      </div>
-                    </div>
-                  </div>
+                {/* 3. Interactive Charts & Widgets (Bar Graph, Donut Pie Circle Chart, Quick Actions, Receivables, Top Customers, Activity) */}
+                <DashboardCharts onOpenNewEntryModal={() => setIsModalOpen(true)} />
 
-                  {/* Card 2: Mint Teal - Credit Entry & Disbursal */}
-                  <div
-                    className="hero-fin-card card-teal"
-                    onClick={() => setActiveTab('credit')}
-                  >
-                    <div className="card-top-icon-row">
-                      <div className="card-round-icon-badge">
-                        <CreditCard size={18} />
-                      </div>
-                      <button className="card-action-menu-btn" aria-label="More options">
-                        <MoreHorizontal size={18} />
-                      </button>
-                    </div>
-                    <div>
-                      <h3 className="card-headline-title">Credit Entry</h3>
-                      <div className="card-detail-subtext">
-                        <span>$42,800.00</span>
-                        <span>•</span>
-                        <span>48% disbursed</span>
-                      </div>
-                      <div className="card-progress-bar-track">
-                        <div className="card-progress-bar-fill" style={{ width: '48%' }} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card 3: Coral - Estimates & Quotes */}
-                  <div
-                    className="hero-fin-card card-coral"
-                    onClick={() => setActiveTab('estimate')}
-                  >
-                    <div className="card-top-icon-row">
-                      <div className="card-round-icon-badge">
-                        <FileText size={18} />
-                      </div>
-                      <button
-                        className="card-action-menu-btn"
-                        aria-label="Create New Estimate"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveTab('new-estimate');
-                        }}
-                        title="Create New Estimate"
-                      >
-                        <Plus size={18} />
-                      </button>
-                    </div>
-                    <div>
-                      <h3 className="card-headline-title">Active Estimates</h3>
-                      <div className="card-detail-subtext">
-                        <span>$86,400.00</span>
-                        <span>•</span>
-                        <span>75% converted</span>
-                      </div>
-                      <div className="card-progress-bar-track">
-                        <div className="card-progress-bar-fill" style={{ width: '75%' }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Composite Financial Dashboard Grid */}
-                <div className="dashboard-composite-grid">
-                  {/* Left Section: Filter Tabs & Recent Entries */}
-                  <div>
-                    <div className="composite-header-row">
-                      <h2 className="composite-title-text">Recent Ledger & Credit Records</h2>
-                      <div className="composite-filter-tabs">
-                        <button
-                          className={`composite-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
-                          onClick={() => setActiveTab('all')}
-                        >
-                          All ({entries.length})
-                        </button>
-                        <button
-                          className={`composite-tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
-                          onClick={() => setActiveTab('ledger')}
-                        >
-                          Ledgers
-                        </button>
-                        <button
-                          className={`composite-tab-btn ${activeTab === 'credit' ? 'active' : ''}`}
-                          onClick={() => setActiveTab('credit')}
-                        >
-                          Credit
-                        </button>
-                        <button
-                          className={`composite-tab-btn ${activeTab === 'estimate' ? 'active' : ''}`}
-                          onClick={() => setActiveTab('estimate')}
-                        >
-                          Estimates
-                        </button>
-                        <button
-                          className={`composite-tab-btn ${activeTab === 'settled' ? 'active' : ''}`}
-                          onClick={() => setActiveTab('settled')}
-                        >
-                          Settled
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="financial-entries-container">
-                      {filteredEntries.map((entry) => (
-                        <div key={entry.id} className="fin-entry-row-card">
-                          <div className="fin-entry-info">
-                            <div className="fin-entry-pills-row">
-                              <span className={`fin-type-pill ${entry.typeClass}`}>
-                                {entry.type}
-                              </span>
-                              <span className="fin-date-label">{entry.date}</span>
-                            </div>
-                            <div className="fin-customer-headline">
-                              <span
-                                style={{
-                                  textDecoration: entry.settled ? 'line-through' : 'none',
-                                  opacity: entry.settled ? 0.6 : 1,
-                                }}
-                              >
-                                {entry.customer}
-                              </span>
-                              <span className="fin-entry-amount">{entry.amount}</span>
-                            </div>
-                          </div>
-
-                          <button
-                            className={`btn-toggle-reconcile ${entry.settled ? 'settled' : ''}`}
-                            onClick={() => toggleSettle(entry.id)}
-                            title={entry.settled ? 'Mark Unsettled' : 'Mark Reconciled'}
-                          >
-                            <Check size={16} strokeWidth={3} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Right Section: Credit Aging, Milestones, and Multi-Bank Sync */}
-                  <div className="fin-analytics-side-col">
-                    {/* Credit Aging & Settlement Health */}
-                    <div className="aging-health-card">
-                      <div className="card-mini-title">
-                        <span>Credit Aging & Exposure</span>
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Real-time</span>
-                      </div>
-
-                      <div className="aging-segments-bar">
-                        <div className="aging-seg-current" title="Current (0-30 Days): 62%" />
-                        <div className="aging-seg-30days" title="31-60 Days: 24%" />
-                        <div className="aging-seg-overdue" title="60+ Days Overdue: 14%" />
-                      </div>
-
-                      <div className="aging-legend-row">
-                        <div className="aging-legend-item">
-                          <span className="aging-legend-header">
-                            <span className="aging-legend-dot" style={{ background: 'var(--teal-primary)' }} />
-                            <span>Current</span>
-                          </span>
-                          <span className="aging-legend-value">$91,915</span>
-                        </div>
-
-                        <div className="aging-legend-item">
-                          <span className="aging-legend-header">
-                            <span className="aging-legend-dot" style={{ background: 'var(--plum-primary)' }} />
-                            <span>30-60d</span>
-                          </span>
-                          <span className="aging-legend-value">$35,580</span>
-                        </div>
-
-                        <div className="aging-legend-item">
-                          <span className="aging-legend-header">
-                            <span className="aging-legend-dot" style={{ background: 'var(--coral-primary)' }} />
-                            <span>Overdue</span>
-                          </span>
-                          <span className="aging-legend-value">$20,755</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Upcoming Settlement Milestones */}
-                    <div className="settlement-milestones-card">
-                      <div className="card-mini-title">
-                        <span>Settlement Milestones</span>
-                        <CalendarDays size={16} color="var(--text-muted)" />
-                      </div>
-
-                      <div className="milestones-list">
-                        {upcomingMilestones.map((m) => {
-                          const IconComp = m.icon;
-                          return (
-                            <div key={m.id} className="milestone-item">
-                              <div className="milestone-left">
-                                <div
-                                  className="milestone-icon-box"
-                                  style={{ background: 'rgba(235, 230, 220, 0.7)' }}
-                                >
-                                  <IconComp size={16} color="var(--text-primary)" />
-                                </div>
-                                <div className="milestone-text">
-                                  <span className="milestone-client">{m.client}</span>
-                                  <span className="milestone-date-due">{m.due}</span>
-                                </div>
-                              </div>
-
-                              <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontWeight: 800, fontSize: 13 }}>{m.amount}</div>
-                                <span className={`milestone-badge ${m.badgeClass}`}>
-                                  {m.badge}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Multi-Bank Ledger Reconcile Card */}
-                    <div className="pro-enterprise-card">
-                      <div className="pro-enterprise-text">
-                        <span className="pro-badge-tier">Instant Sync</span>
-                        <h4 className="pro-enterprise-title">Multi-Bank Ledger Reconcile</h4>
-                        <p className="pro-enterprise-desc">
-                          Auto-match customer credit entries with live bank feeds in real-time.
-                        </p>
-                      </div>
-                      <div className="pro-enterprise-icon-badge">
-                        <Sparkles size={24} />
-                      </div>
-                    </div>
-                  </div>
+                {/* 4. Full-Width Recent Transactions Table (Reference Design) */}
+                <div className="dashboard-table-fullwidth">
+                  <EnterpriseTable
+                    entries={entries}
+                    onToggleSettle={toggleSettle}
+                    onDeleteEntry={handleDeleteEntry}
+                    onUpdateEntry={handleUpdateEntry}
+                    onOpenNewEntryModal={() => setIsModalOpen(true)}
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                  />
                 </div>
               </>
             )}
