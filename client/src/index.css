@@ -599,177 +599,179 @@ body {
   border-color: #047857;
 }
 
-/* 5 Stonemart / Enterprise Stat Cards Grid with Decorative Background Circle Style */
-.stonemart-stat-cards-grid {
+/* ==========================================================================
+   BENTO GRADIENT STAT CARDS (Modern 2025 Full-Gradient Style)
+   ========================================================================== */
+
+.bento-stat-cards-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 22px;
 }
 
 @media (max-width: 1120px) {
-  .stonemart-stat-cards-grid {
+  .bento-stat-cards-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 740px) {
-  .stonemart-stat-cards-grid {
+  .bento-stat-cards-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 480px) {
-  .stonemart-stat-cards-grid {
+  .bento-stat-cards-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.stonemart-stat-card {
+/* Base Bento Card */
+.bento-stat-card {
   position: relative;
   overflow: hidden;
-  background: #FFFFFF;
-  border: 1px solid #E8EEF5;
-  border-radius: 16px;
-  padding: 14px 14px;
+  border-radius: 18px;
+  padding: 18px 18px 16px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03), 0 1px 3px rgba(15, 23, 42, 0.02);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 130px;
   cursor: default;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Subtle noise texture via SVG data URI */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  background-blend-mode: overlay;
 }
 
-.stonemart-stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
-  border-color: #D6E2EE;
+.bento-stat-card:hover {
+  transform: translateY(-5px) scale(1.012);
 }
 
-/* Decorative Background Corner Circle / Blob Style */
-.card-corner-circle {
+/* Ghost Watermark Icon — large, faded, behind content */
+.bento-ghost-icon {
   position: absolute;
-  right: -24px;
-  bottom: -32px;
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
+  right: -8px;
+  top: -10px;
+  opacity: 0.12;
+  color: #FFFFFF;
+  line-height: 1;
   pointer-events: none;
-  transition: all 0.35s ease;
-  z-index: 1;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+  transform: rotate(-12deg);
 }
 
-.stonemart-stat-card:hover .card-corner-circle {
-  transform: scale(1.22);
+.bento-stat-card:hover .bento-ghost-icon {
+  transform: rotate(-6deg) scale(1.1);
+  opacity: 0.18;
 }
 
-/* Theme Circle Colors (Soft Gradient Pastels) */
-.circle-blue {
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.16) 0%, rgba(59, 130, 246, 0.04) 65%, transparent 100%);
-  box-shadow: inset 0 0 15px rgba(37, 99, 235, 0.08);
-}
-
-.circle-purple {
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.16) 0%, rgba(139, 92, 246, 0.04) 65%, transparent 100%);
-  box-shadow: inset 0 0 15px rgba(124, 58, 237, 0.08);
-}
-
-.circle-green {
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.04) 65%, transparent 100%);
-  box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.08);
-}
-
-.circle-orange {
-  background: radial-gradient(circle, rgba(249, 115, 22, 0.16) 0%, rgba(234, 88, 12, 0.04) 65%, transparent 100%);
-  box-shadow: inset 0 0 15px rgba(249, 115, 22, 0.08);
-}
-
-.circle-teal {
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.16) 0%, rgba(6, 182, 212, 0.04) 65%, transparent 100%);
-  box-shadow: inset 0 0 15px rgba(14, 165, 233, 0.08);
-}
-
-/* The Vibrant Squircle Icon Box */
-.card-squircle-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
+/* Small Icon Badge top-right */
+.bento-icon-top {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  color: rgba(255, 255, 255, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 2;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: color 0.2s ease;
 }
 
-.stonemart-stat-card:hover .card-squircle-icon {
-  transform: scale(1.06);
+.bento-stat-card:hover .bento-icon-top {
+  color: rgba(255, 255, 255, 0.95);
 }
 
-.icon-blue {
-  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
-}
-
-.icon-purple {
-  background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.28);
-}
-
-.icon-green {
-  background: linear-gradient(135deg, #10B981 0%, #047857 100%);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.28);
-}
-
-.icon-orange {
-  background: linear-gradient(135deg, #FB923C 0%, #C2410C 100%);
-  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.28);
-}
-
-.icon-teal {
-  background: linear-gradient(135deg, #06B6D4 0%, #0369A1 100%);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.28);
-}
-
-/* Card Metric Typography */
-.card-metric-info {
+/* Card Text Content */
+.bento-card-inner {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   position: relative;
   z-index: 2;
-  min-width: 0;
-  flex: 1;
 }
 
-.card-metric-label {
+.bento-label {
   font-size: 11.5px;
   font-weight: 600;
-  color: #64748B;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.2;
 }
 
-.card-metric-value {
-  font-size: 20px;
+.bento-value {
+  font-size: 26px;
   font-weight: 800;
-  color: #0F172A;
-  letter-spacing: -0.4px;
-  margin: 2px 0 2px 0;
+  color: #FFFFFF;
+  letter-spacing: -0.6px;
   line-height: 1.1;
+  margin: 1px 0;
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
 }
 
-.card-metric-subtext {
-  font-size: 11px;
+.bento-trend {
+  font-size: 11.5px;
   font-weight: 500;
-  color: #64748B;
+  color: rgba(255, 255, 255, 0.7);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.2;
+}
+
+/* Color Variants with vivid gradients + matching glow */
+.bento-blue {
+  background-color: #2563EB;
+  background-image: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 55%, #1E40AF 100%), url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.45), 0 2px 8px -2px rgba(37, 99, 235, 0.25);
+}
+
+.bento-blue:hover {
+  box-shadow: 0 16px 36px -4px rgba(37, 99, 235, 0.55), 0 4px 12px -2px rgba(37, 99, 235, 0.3);
+}
+
+.bento-purple {
+  background-color: #7C3AED;
+  background-image: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 55%, #5B21B6 100%), url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+  box-shadow: 0 8px 24px -4px rgba(124, 58, 237, 0.45), 0 2px 8px -2px rgba(124, 58, 237, 0.25);
+}
+
+.bento-purple:hover {
+  box-shadow: 0 16px 36px -4px rgba(124, 58, 237, 0.55), 0 4px 12px -2px rgba(124, 58, 237, 0.3);
+}
+
+.bento-green {
+  background-color: #059669;
+  background-image: linear-gradient(135deg, #10B981 0%, #059669 55%, #047857 100%), url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+  box-shadow: 0 8px 24px -4px rgba(5, 150, 105, 0.45), 0 2px 8px -2px rgba(5, 150, 105, 0.25);
+}
+
+.bento-green:hover {
+  box-shadow: 0 16px 36px -4px rgba(5, 150, 105, 0.55), 0 4px 12px -2px rgba(5, 150, 105, 0.3);
+}
+
+.bento-orange {
+  background-color: #D97706;
+  background-image: linear-gradient(135deg, #F59E0B 0%, #D97706 55%, #B45309 100%), url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+  box-shadow: 0 8px 24px -4px rgba(217, 119, 6, 0.45), 0 2px 8px -2px rgba(217, 119, 6, 0.25);
+}
+
+.bento-orange:hover {
+  box-shadow: 0 16px 36px -4px rgba(217, 119, 6, 0.55), 0 4px 12px -2px rgba(217, 119, 6, 0.3);
+}
+
+.bento-teal {
+  background-color: #0369A1;
+  background-image: linear-gradient(135deg, #06B6D4 0%, #0284C7 55%, #0369A1 100%), url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+  box-shadow: 0 8px 24px -4px rgba(3, 105, 161, 0.45), 0 2px 8px -2px rgba(3, 105, 161, 0.25);
+}
+
+.bento-teal:hover {
+  box-shadow: 0 16px 36px -4px rgba(3, 105, 161, 0.55), 0 4px 12px -2px rgba(3, 105, 161, 0.3);
 }
 
 /* ==========================================================================

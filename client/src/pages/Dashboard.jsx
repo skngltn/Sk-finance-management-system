@@ -455,70 +455,80 @@ function Dashboard() {
                   </div>
                 </div>
 
-                {/* 2. Sleek ERP Stat Cards with Decorative Circle Styles (Matching Reference Design) */}
-                <div className="stonemart-stat-cards-grid">
+                {/* 2. Bento Gradient Stat Cards */}
+                <div className="bento-stat-cards-grid">
                   {/* Card 1: Blue - Total Revenue */}
-                  <div className="stonemart-stat-card theme-blue">
-                    <div className="card-corner-circle circle-blue" />
-                    <div className="card-squircle-icon icon-blue">
-                      <TrendingUp size={20} color="#FFFFFF" />
+                  <div className="bento-stat-card bento-blue">
+                    <div className="bento-ghost-icon">
+                      <TrendingUp size={64} />
                     </div>
-                    <div className="card-metric-info">
-                      <span className="card-metric-label">Total Revenue</span>
-                      <h3 className="card-metric-value">$148,250</h3>
-                      <span className="card-metric-subtext">↑ 14.8% vs last month</span>
+                    <div className="bento-card-inner">
+                      <span className="bento-label">Total Revenue</span>
+                      <h3 className="bento-value">$148,250</h3>
+                      <span className="bento-trend">↑ 14.8% vs last month</span>
+                    </div>
+                    <div className="bento-icon-top">
+                      <TrendingUp size={18} />
                     </div>
                   </div>
 
                   {/* Card 2: Purple - Receivables */}
-                  <div className="stonemart-stat-card theme-purple">
-                    <div className="card-corner-circle circle-purple" />
-                    <div className="card-squircle-icon icon-purple">
-                      <CreditCard size={20} color="#FFFFFF" />
+                  <div className="bento-stat-card bento-purple">
+                    <div className="bento-ghost-icon">
+                      <CreditCard size={64} />
                     </div>
-                    <div className="card-metric-info">
-                      <span className="card-metric-label">Receivables</span>
-                      <h3 className="card-metric-value">$32,450</h3>
-                      <span className="card-metric-subtext">24 invoices pending</span>
+                    <div className="bento-card-inner">
+                      <span className="bento-label">Receivables</span>
+                      <h3 className="bento-value">$32,450</h3>
+                      <span className="bento-trend">24 invoices pending</span>
+                    </div>
+                    <div className="bento-icon-top">
+                      <CreditCard size={18} />
                     </div>
                   </div>
 
                   {/* Card 3: Green - Payments Received */}
-                  <div className="stonemart-stat-card theme-green">
-                    <div className="card-corner-circle circle-green" />
-                    <div className="card-squircle-icon icon-green">
-                      <CheckCircle2 size={20} color="#FFFFFF" />
+                  <div className="bento-stat-card bento-green">
+                    <div className="bento-ghost-icon">
+                      <CheckCircle2 size={64} />
                     </div>
-                    <div className="card-metric-info">
-                      <span className="card-metric-label">Payments Received</span>
-                      <h3 className="card-metric-value">$89,240</h3>
-                      <span className="card-metric-subtext">↑ 12.1% vs last month</span>
+                    <div className="bento-card-inner">
+                      <span className="bento-label">Payments Received</span>
+                      <h3 className="bento-value">$89,240</h3>
+                      <span className="bento-trend">↑ 12.1% vs last month</span>
+                    </div>
+                    <div className="bento-icon-top">
+                      <CheckCircle2 size={18} />
                     </div>
                   </div>
 
                   {/* Card 4: Orange - Active Clients */}
-                  <div className="stonemart-stat-card theme-orange">
-                    <div className="card-corner-circle circle-orange" />
-                    <div className="card-squircle-icon icon-orange">
-                      <Users size={20} color="#FFFFFF" />
+                  <div className="bento-stat-card bento-orange">
+                    <div className="bento-ghost-icon">
+                      <Users size={64} />
                     </div>
-                    <div className="card-metric-info">
-                      <span className="card-metric-label">Active Clients</span>
-                      <h3 className="card-metric-value">1,284</h3>
-                      <span className="card-metric-subtext">+18 new this month</span>
+                    <div className="bento-card-inner">
+                      <span className="bento-label">Active Clients</span>
+                      <h3 className="bento-value">1,284</h3>
+                      <span className="bento-trend">+18 new this month</span>
+                    </div>
+                    <div className="bento-icon-top">
+                      <Users size={18} />
                     </div>
                   </div>
 
                   {/* Card 5: Teal - Customer Ledgers */}
-                  <div className="stonemart-stat-card theme-teal">
-                    <div className="card-corner-circle circle-teal" />
-                    <div className="card-squircle-icon icon-teal">
-                      <BookOpen size={20} color="#FFFFFF" />
+                  <div className="bento-stat-card bento-teal">
+                    <div className="bento-ghost-icon">
+                      <BookOpen size={64} />
                     </div>
-                    <div className="card-metric-info">
-                      <span className="card-metric-label">Customer Ledgers</span>
-                      <h3 className="card-metric-value">342</h3>
-                      <span className="card-metric-subtext">94.2% reconciled</span>
+                    <div className="bento-card-inner">
+                      <span className="bento-label">Customer Ledgers</span>
+                      <h3 className="bento-value">342</h3>
+                      <span className="bento-trend">94.2% reconciled</span>
+                    </div>
+                    <div className="bento-icon-top">
+                      <BookOpen size={18} />
                     </div>
                   </div>
                 </div>
