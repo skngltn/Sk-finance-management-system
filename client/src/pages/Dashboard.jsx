@@ -55,51 +55,83 @@ function Dashboard() {
 
   useEffect(() => {
     const fetchMenuStructure = async () => {
-      const { data: mainData, error: mainError } = await supabase.from('mainmenu').select('*').order('sort_order', { ascending: true });
+      const { data: mainData, error: mainError } = await supabase
+        .from('mainmenu')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
       if (mainError) {
         console.error('Error fetching mainmenu:', mainError);
         return;
       }
 
-      const { data: subData, error: subError } = await supabase.from('submenu').select('*').order('sort_by', { ascending: true });
+      const { data: subData, error: subError } = await supabase
+        .from('submenu')
+        .select('*')
+        .order('sort_by', { ascending: true });
+
       if (subError) {
         console.error('Error fetching submenu:', subError);
         return;
       }
 
-      const dynamicMenu = (mainData || []).map((main) => {
-        const subMenusForMain = (subData || [])
-          .filter((sub) => sub.menu_id === main.id)
-          .map((sub) => ({
-            id: sub.id,
-            label: sub.submenu_name,
-            tab: sub.path ? sub.path.split('/').filter(Boolean).pop().toLowerCase() : 'all'
-          }));
+      let allowedSubmenuIds = null;
+      const isSuperAdmin = user?.profile?.role === 'admin';
 
-        const IconComp = iconMap[main.icon] || BookOpen;
+      if (user?.id && !isSuperAdmin) {
+        // Query singular 'user_permission' (with fallback to 'user_permissions')
+        let { data: perms, error: permError } = await supabase
+          .from('user_permission')
+          .select('submenu_id')
+          .eq('user_id', user.id);
 
-        return {
-          id: main.id,
-          label: main.menu_name,
-          icon: IconComp,
-          path: main.path ? main.path.split('/').filter(Boolean).pop().toLowerCase() : 'all',
-          subMenus: subMenusForMain,
-        };
-      });
+        if (permError) {
+          const { data: altPerms } = await supabase
+            .from('user_permissions')
+            .select('submenu_id')
+            .eq('user_id', user.id);
+          perms = altPerms;
+        }
+
+        if (perms && perms.length > 0) {
+          allowedSubmenuIds = new Set(perms.map((p) => String(p.submenu_id)));
+        }
+      }
+
+      const dynamicMenu = (mainData || [])
+        .map((main) => {
+          const subMenusForMain = (subData || [])
+            .filter((sub) => String(sub.menu_id) === String(main.id))
+            .filter((sub) => isSuperAdmin || !allowedSubmenuIds || allowedSubmenuIds.has(String(sub.id)))
+            .map((sub) => ({
+              id: sub.id,
+              label: sub.submenu_name,
+              tab: sub.path ?
+                sub.path.split('/').filter(Boolean).pop().toLowerCase() : 'all',
+            }));
+          const IconComp = iconMap[main.icon] || BookOpen;
+          return {
+            id: main.id,
+            label: main.menu_name,
+            icon: IconComp,
+            path: main.path ? main.path.split('/').filter(Boolean).pop().toLowerCase() : 'all',
+            subMenus: subMenusForMain,
+          };
+        })
+        .filter((main) => isSuperAdmin || main.subMenus.length > 0 || main.path);
 
       setMenuStructure(dynamicMenu);
 
+      // Expand all menus by default
       const initialExpanded = {};
-      dynamicMenu.forEach(m => {
+      dynamicMenu.forEach((m) => {
         initialExpanded[m.id] = true;
       });
-      setExpandedMenus(prev => Object.keys(prev).length > 0 ? prev : initialExpanded);
-      setActiveSubMenu(prev => prev || (dynamicMenu[0]?.subMenus[0]?.id || ''));
-      setActiveTab(prev => (prev === 'all' && dynamicMenu[0]?.subMenus[0]?.tab) ? dynamicMenu[0].subMenus[0].tab : prev);
+      setExpandedMenus((prev) => (Object.keys(prev).length > 0 ? prev : initialExpanded));
     };
-
     fetchMenuStructure();
-  }, []);
+  }, [user]);
+
 
   const toggleMainMenu = (menuId) => {
     const menu = menuStructure.find((m) => m.id === menuId);
