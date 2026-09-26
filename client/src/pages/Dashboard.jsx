@@ -27,6 +27,8 @@ import MainMenuPage from './MainMenuPage';
 import SubMenuPage from './SubMenuPage';
 import PermissionPage from './PermissionPage';
 import NewEstimatePage from './NewEstimatePage';
+import EditEstimatePage from './EditEstimatePage';
+import ManageEstimatePage from './ManageEstimatePage';
 import EnterpriseTable from '../components/EnterpriseTable';
 import { DashboardCharts } from '../components/DashboardCharts';
 
@@ -47,6 +49,7 @@ function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editEstimateId, setEditEstimateId] = useState(null);
 
   // Main Menu & Sub Menu state
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -457,6 +460,14 @@ function Dashboard() {
                   setEntries((prev) => [newEst, ...prev]);
                   setActiveTab('all');
                 }}
+              />
+            ) : activeTab === 'manage-estimate' || activeTab.includes('manage-estimate') ? (
+              <ManageEstimatePage onEdit={(id) => { setEditEstimateId(id); setActiveTab('edit-estimate'); }} />
+            ) : activeTab === 'edit-estimate' ? (
+              <EditEstimatePage 
+                editEstimateId={editEstimateId}
+                onBack={() => setActiveTab('manage-estimate')}
+                onEstimateSaved={() => setActiveTab('manage-estimate')}
               />
             ) : activeTab.includes('mainmenu') ? (
               <MainMenuPage />

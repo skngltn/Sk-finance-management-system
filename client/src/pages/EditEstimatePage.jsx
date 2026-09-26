@@ -15,11 +15,12 @@ import {
 import { supabase } from '../lib/supabase';
 import AddCustomerModal from '../components/AddCustomerModal';
 
-function NewEstimatePage({ onBack, onEstimateSaved }) {
+function EditEstimatePage({ onBack, onEstimateSaved, editEstimateId }) {
     const [customers, setCustomers] = useState([]);
     const [loadingCustomers, setLoadingCustomers] = useState(true);
     const [selectedCustomerId, setSelectedCustomerId] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
 
     // Modal State for Direct Customer Addition
     const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
@@ -54,8 +55,58 @@ function NewEstimatePage({ onBack, onEstimateSaved }) {
 
     useEffect(() => {
         fetchCustomers();
-        generateEstimateNumber();
-    }, []);
+        if (editEstimateId) {
+            setIsEditing(true);
+            fetchEstimateToEdit(editEstimateId);
+        } else {
+            generateEstimateNumber();
+        }
+    }, [editEstimateId]);
+
+    useEffect(() => {
+        if (selectedCustomerId && customers.length > 0) {
+            const found = customers.find((c) => String(c.id) === String(selectedCustomerId));
+            setSelectedCustomer(found || null);
+        }
+    }, [selectedCustomerId, customers]);
+
+    const fetchEstimateToEdit = async (id) => {
+        try {
+            const { data: estData, error: estError } = await supabase
+                .from('estimates')
+                .select('*')
+                .eq('id', id)
+                .single();
+            if (estError) throw estError;
+
+            setEstimateNumber(estData.estimate_number);
+            setEstimateDate(estData.estimate_date);
+            setExpiryDate(estData.expiry_date);
+            setEstimateStatus(estData.status);
+            setNotes(estData.notes || '');
+            setDiscountAmount(estData.discount_amount || 0);
+            setSelectedCustomerId(estData.customer_id || '');
+
+            const { data: itemsData, error: itemsError } = await supabase
+                .from('estimate_items')
+                .select('*')
+                .eq('estimate_id', id);
+            if (itemsError) throw itemsError;
+
+            if (itemsData && itemsData.length > 0) {
+                setItems(itemsData.map(it => ({
+                    id: it.id,
+                    description: it.item_description,
+                    quantity: it.quantity,
+                    unitPrice: it.unit_price,
+                    total: it.total
+                })));
+            }
+        } catch (err) {
+            console.error('Error fetching estimate to edit:', err);
+            setErrorMessage('Failed to load estimate for editing.');
+        }
+    };
 
     const fetchCustomers = async () => {
         setLoadingCustomers(true);
@@ -97,8 +148,6 @@ function NewEstimatePage({ onBack, onEstimateSaved }) {
 
     const handleCustomerSelect = (id) => {
         setSelectedCustomerId(id);
-        const found = customers.find((c) => String(c.id) === String(id));
-        setSelectedCustomer(found || null);
     };
 
     const handleCustomerAdded = (newCust) => {
@@ -185,16 +234,25 @@ function NewEstimatePage({ onBack, onEstimateSaved }) {
         };
 
         try {
-            // 1. Insert estimate into Supabase
-            const { data: estData, error: estError } = await supabase
-                .from('estimates')
-                .insert([estimatePayload])
-                .select()
-                .single();
+            let createdEstId;
+            if (isEditing) {
+                const { error: estError } = await supabase
+                    .from('estimates')
+                    .update(estimatePayload)
+                    .eq('id', editEstimateId);
+                if (estError) throw estError;
+                createdEstId = editEstimateId;
 
-            if (estError) throw estError;
-
-            const createdEstId = estData.id;
+                await supabase.from('estimate_items').delete().eq('estimate_id', createdEstId);
+            } else {
+                const { data: estData, error: estError } = await supabase
+                    .from('estimates')
+                    .insert([estimatePayload])
+                    .select()
+                    .single();
+                if (estError) throw estError;
+                createdEstId = estData.id;
+            }
 
             // 2. Insert line items
             const lineItemsPayload = items.map((it) => ({
@@ -208,7 +266,7 @@ function NewEstimatePage({ onBack, onEstimateSaved }) {
             const { error: itemsError } = await supabase.from('estimate_items').insert(lineItemsPayload);
             if (itemsError) throw itemsError;
 
-            setSuccessMessage(`Estimate ${estimateNumber} successfully created and saved!`);
+            setSuccessMessage(`Estimate ${estimateNumber} successfully ${isEditing ? 'updated' : 'created'}!`);
 
             if (onEstimateSaved) {
                 onEstimateSaved({
@@ -251,11 +309,11 @@ function NewEstimatePage({ onBack, onEstimateSaved }) {
                         <div className="estimate-badge-row">
                             <span className="pill-coral-bg pill-coral-text fin-type-pill">
                                 <FileText size={12} style={{ display: 'inline', marginRight: 4 }} />
-                                New Estimate Studio
+                                {isEditing ? 'Edit Estimate Studio' : 'New Estimate Studio'}
                             </span>
                             <span className="estimate-status-pill">{estimateStatus}</span>
                         </div>
-                        <h1 className="estimate-main-title">Create Commercial Estimate</h1>
+                        <h1 className="estimate-main-title">{isEditing ? 'Edit Commercial Estimate' : 'Create Commercial Estimate'}</h1>
                     </div>
                 </div>
 
@@ -275,7 +333,7 @@ function NewEstimatePage({ onBack, onEstimateSaved }) {
                         disabled={saving}
                     >
                         <CheckCircle2 size={16} />
-                        <span>{saving ? 'Saving...' : 'Save Estimate'}</span>
+                        <span>{saving ? 'Saving...' : (isEditing ? 'Update Estimate' : 'Save Estimate')}</span>
                     </button>
                 </div>
             </div>
@@ -610,7 +668,7 @@ function NewEstimatePage({ onBack, onEstimateSaved }) {
                                 disabled={saving}
                             >
                                 <CheckCircle2 size={18} />
-                                <span>{saving ? 'Saving...' : 'Create & Save Estimate'}</span>
+                                <span>{saving ? 'Saving...' : (isEditing ? 'Update & Save Estimate' : 'Create & Save Estimate')}</span>
                             </button>
                         </div>
                     </div>
@@ -627,4 +685,4 @@ function NewEstimatePage({ onBack, onEstimateSaved }) {
     );
 }
 
-export default NewEstimatePage;
+export default EditEstimatePage;

@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 function MainMenuPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState(null);
-  
+
   // Form State
   const [menuName, setMenuName] = useState('');
   const [path, setPath] = useState('');
@@ -67,7 +67,7 @@ function MainMenuPage() {
       const { error } = await supabase.from('mainmenu').insert([payload]);
       if (error) console.error('Error inserting menu:', error);
     }
-    
+
     closeModal();
     fetchMenus();
   };
@@ -95,7 +95,7 @@ function MainMenuPage() {
           <Plus size={16} /> Add New
         </button>
       </div>
-      
+
       <div style={{ marginTop: '2rem', width: '100%' }}>
         <div className="fin-entry-row-card" style={{ padding: '0', display: 'block', overflowX: 'auto', width: '100%' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -195,7 +195,7 @@ function MainMenuPage() {
                   onChange={(e) => setSortOrder(e.target.value)}
                 />
               </div>
-              
+
               <div className="modal-actions">
                 <button type="button" className="btn-modal-cancel" onClick={closeModal}>
                   Cancel

@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 function SubMenuPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState(null);
-  
+
   // Form State
   const [submenuName, setSubmenuName] = useState('');
   const [menuId, setMenuId] = useState('');
@@ -22,7 +22,7 @@ function SubMenuPage() {
 
   const fetchData = async () => {
     setLoading(true);
-    
+
     // Fetch main menus for the dropdown
     const { data: mainData, error: mainError } = await supabase.from('mainmenu').select('id, menu_name').order('sort_order', { ascending: true });
     if (mainError) console.error('Error fetching main menus:', mainError);
@@ -35,7 +35,7 @@ function SubMenuPage() {
         menu_name
       )
     `).order('sort_by', { ascending: true });
-    
+
     if (subError) console.error('Error fetching sub menus:', subError);
     else setSubMenus(subData || []);
 
@@ -78,7 +78,7 @@ function SubMenuPage() {
       const { error } = await supabase.from('submenu').insert([payload]);
       if (error) console.error('Error inserting sub menu:', error);
     }
-    
+
     closeModal();
     fetchData();
   };
@@ -106,7 +106,7 @@ function SubMenuPage() {
           <Plus size={16} /> Add New
         </button>
       </div>
-      
+
       <div style={{ marginTop: '2rem', width: '100%' }}>
         <div className="fin-entry-row-card" style={{ padding: '0', display: 'block', overflowX: 'auto', width: '100%' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -210,7 +210,7 @@ function SubMenuPage() {
                   onChange={(e) => setSortBy(e.target.value)}
                 />
               </div>
-              
+
               <div className="modal-actions">
                 <button type="button" className="btn-modal-cancel" onClick={closeModal}>
                   Cancel
